@@ -2,6 +2,13 @@
 
 Azure-centric proof-of-concept for extracting youth baseball team branding and generating glove design proposals with an optional Playwright autofill worker.
 
+## What this project does (in plain English)
+- You send a team website URL.
+- The system crawls a few pages, finds the best logo, and extracts colors.
+- It creates three glove design variants (A/B/C).
+- It stores all outputs in Azure Blob Storage and tracks job status.
+- If you choose `autofill`, a Playwright worker tries to fill out the BC2 Gloves wizard. If it cannot, the job still finishes with a proposal and manual steps.
+
 ## Architecture
 ```
 Client
@@ -66,6 +73,103 @@ npm run start:cli -- https://arlingtontravelbaseball.org/
 Artifacts are written to `./local-output`.
 
 ## Azure deployment
+## Azure components you must deploy
+These are the building blocks in Azure. Think of them like Lego pieces the app snaps together:
+1) Azure Functions (Function App)
+   - Runs the API and Durable Functions orchestration.
+   - Receives `POST /jobs` and `GET /jobs/{jobId}`.
+2) Azure Service Bus (Queue)
+   - Holds incoming job messages so work can run in the background.
+3) Azure Storage Account (Blob)
+   - Stores the artifacts under `/jobs/{jobId}/`.
+4) Cosmos DB (or Table Storage)
+   - Stores job status and progress.
+5) Application Insights
+   - Collects logs and traces. Every log includes `jobId`.
+6) Container Apps Job (wizard worker)
+   - Runs Playwright automation (optional).
+
+If you deploy with `infra/main.bicep`, the template creates all of the above.
+
+## Integration guide (step-by-step)
+### 1) Deploy the Azure resources
+Use the Bicep template:
+```bash
+az deployment sub create \
+  --location eastus \
+  --template-file infra/main.bicep \
+  --parameters location=eastus projectName=glovedesign
+```
+
+### 2) Configure Function App settings
+The Function App needs these settings (see table below). Most are filled in by Bicep, but add the ones you need:
+- If you want queue-based worker: set `WIZARD_QUEUE` and `WIZARD_RESULTS_QUEUE`.
+- If you want HTTP worker: set `WIZARD_ENDPOINT`.
+
+### 3) Deploy the Function App
+Use your preferred method, for example:
+```bash
+func azure functionapp publish <function-app-name>
+```
+
+### 4) Build and deploy the wizard worker (optional)
+The worker can be triggered in two ways:
+- HTTP mode: deploy the container and set `WIZARD_ENDPOINT` to its URL.
+- Queue mode: deploy the container and set `WIZARD_QUEUE` + `WIZARD_RESULTS_QUEUE`.
+
+Docker build (example):
+```bash
+docker build -f worker/Dockerfile -t glovedesign-wizard:latest .
+```
+
+### 5) Submit a job
+```bash
+curl -X POST https://<function-app>.azurewebsites.net/api/jobs \
+  -H "x-functions-key: <key>" \
+  -H "content-type: application/json" \
+  -d '{"teamUrl":"https://arlingtontravelbaseball.org/","mode":"proposal"}'
+```
+Response:
+```json
+{ "jobId": "uuid" }
+```
+
+### 6) Poll job status
+```bash
+curl -X GET https://<function-app>.azurewebsites.net/api/jobs/<jobId> \
+  -H "x-functions-key: <key>"
+```
+When the job finishes, `status` becomes `Succeeded` or `Failed`.
+
+### 7) Read artifacts
+Artifacts are written to Blob Storage under:
+```
+/jobs/{jobId}/
+```
+Look for:
+- `logo.(png|jpg|svg)`
+- `palette.json`
+- `glove_design.json`
+- `proposal.md`
+- `crawl_report.json`
+- `wizard_schema_snapshot.json` (autofill attempted)
+- `configured.png` (autofill success only)
+
+## How the data flows
+1) API validates the URL (SSRF checks).
+2) Job is queued in Service Bus.
+3) Durable Functions runs each stage:
+   - validate input
+   - robots + terms check
+   - crawl pages
+   - score logo
+   - extract colors
+   - generate designs
+   - write artifacts
+   - optional autofill worker
+4) Job status is stored in Cosmos DB or Table Storage.
+
+## Environment variables
 ### Environment variables
 | Variable | Purpose |
 | --- | --- |
@@ -158,3 +262,16 @@ curl -X GET https://<function-app>.azurewebsites.net/api/jobs/<jobId> \
 ```bash
 npm test
 ```
+
+## Troubleshooting (quick fixes)
+- Job stays in `Running`
+  - Check Service Bus queue length and dead-letter messages.
+  - Verify the Function App has access to Service Bus and Storage.
+- No artifacts in Blob Storage
+  - Confirm `BLOB_URL` and `BLOB_CONTAINER`.
+  - Ensure Function App identity has `Storage Blob Data Contributor`.
+- Wizard autofill never runs
+  - If using HTTP: verify `WIZARD_ENDPOINT` is reachable.
+  - If using queues: verify `WIZARD_QUEUE` and `WIZARD_RESULTS_QUEUE`.
+- Wizard autofill fails immediately
+  - Site may be blocked or require a login/captcha (this is expected; proposal-only still works).

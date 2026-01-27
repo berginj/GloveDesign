@@ -5,7 +5,8 @@ import { GlovePreview } from "./components/GlovePreview";
 import { DesignSummary } from "./components/DesignSummary";
 import { loadSeedCatalog } from "./data/seedCatalog";
 import { buildDesignContext, getAvailableOptions } from "./engine/optionEngine";
-import { buildInitialDesign, updateDesignField } from "./state/designState";
+import { applyPaletteToDesign, buildInitialDesign, updateDesignField } from "./state/designState";
+import type { PaletteResult } from "./api/branding";
 
 const steps: WizardStepId[] = ["start", "pattern", "materials", "colors", "build", "personalize", "review", "checkout"];
 
@@ -14,6 +15,10 @@ export function App() {
   const [activeStep, setActiveStep] = useState<WizardStepId>("start");
   const [design, setDesign] = useState(() => buildInitialDesign(catalog));
   const [started, setStarted] = useState(false);
+  const [branding, setBranding] = useState<{ logoUrl: string | null; palette: PaletteResult | null }>({
+    logoUrl: null,
+    palette: null,
+  });
 
   const update = (path: string, value: string) => {
     setDesign((prev) => updateDesignField(prev, path, value, catalog));
@@ -35,6 +40,10 @@ export function App() {
             design={design}
             catalog={catalog}
             onUpdate={update}
+            onBrandingReady={(payload) => {
+              setBranding(payload);
+              setDesign((prev) => applyPaletteToDesign(prev, catalog, payload.palette));
+            }}
             onStart={() => {
               setStarted(true);
               setActiveStep("pattern");
@@ -60,7 +69,7 @@ export function App() {
       </div>
 
       <div className="panel preview">
-        <GlovePreview design={design} />
+        <GlovePreview design={design} logoUrl={branding.logoUrl} />
         <DesignSummary design={design} catalog={catalog} />
       </div>
     </div>

@@ -5,9 +5,10 @@ import { RenderResult } from "../renderers/GloveRenderer";
 
 interface GlovePreviewProps {
   design: CatalogDesign;
+  logoUrl?: string | null;
 }
 
-export function GlovePreview({ design }: GlovePreviewProps) {
+export function GlovePreview({ design, logoUrl }: GlovePreviewProps) {
   const renderer = useMemo(() => new PlaceholderRenderer(), []);
   const [result, setResult] = useState<RenderResult | null>(null);
 
@@ -49,6 +50,14 @@ export function GlovePreview({ design }: GlovePreviewProps) {
         <strong>Renderer Output</strong>
         <div className="summary">{JSON.stringify(result, null, 2)}</div>
       </div>
+      {logoUrl && (
+        <div>
+          <strong>Team Logo</strong>
+          <div className="logo-preview">
+            <img src={logoUrl} alt="Team logo" />
+          </div>
+        </div>
+      )}
     </>
   );
 }

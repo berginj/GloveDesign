@@ -7,9 +7,10 @@ interface StartLandingProps {
   catalog: SeedCatalog;
   onUpdate: (path: string, value: string) => void;
   onStart: () => void;
+  onBrandingReady: (payload: { logoUrl: string | null; palette: PaletteResult | null }) => void;
 }
 
-export function StartLanding({ design, catalog, onUpdate, onStart }: StartLandingProps) {
+export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingReady }: StartLandingProps) {
   const [teamUrl, setTeamUrl] = useState("");
   const [status, setStatus] = useState<"idle" | "running" | "done" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
@@ -63,6 +64,9 @@ export function StartLanding({ design, catalog, onUpdate, onStart }: StartLandin
       if (paletteUrl) {
         const paletteData = await fetchPalette(paletteUrl);
         setPalette(paletteData);
+        onBrandingReady({ logoUrl: logo, palette: paletteData });
+      } else {
+        onBrandingReady({ logoUrl: logo, palette: null });
       }
       setStatus("done");
       setMessage("Branding captured. Review the palette below.");

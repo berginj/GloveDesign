@@ -1,4 +1,5 @@
 import { CatalogDesign, SeedCatalog } from "../data/seedCatalog";
+import type { PaletteResult } from "../api/branding";
 
 export function buildInitialDesign(catalog: SeedCatalog): CatalogDesign {
   const defaultBrand = catalog.brands[0];
@@ -98,6 +99,89 @@ export function summarizeDesign(design: CatalogDesign, catalog: SeedCatalog): st
     `Throw: ${design.throwHand}`,
     `Age Level: ${design.ageLevel}`,
   ].join("\n");
+}
+
+export function applyPaletteToDesign(design: CatalogDesign, catalog: SeedCatalog, palette: PaletteResult | null): CatalogDesign {
+  if (!palette) {
+    return design;
+  }
+  const swatches = [palette.primary, palette.secondary, palette.accent, palette.neutral]
+    .filter(Boolean)
+    .map((color) => color!.hex);
+  const fallback = palette.colors?.map((color) => color.hex) ?? [];
+  const colors = swatches.length ? swatches : fallback;
+  if (!colors.length) {
+    return design;
+  }
+
+  const mapHexToColorId = (hex: string) => {
+    const normalized = hex.toLowerCase();
+    const exact = catalog.colors.find((color) => color.hex.toLowerCase() === normalized);
+    if (exact) {
+      return exact.id;
+    }
+    let best = catalog.colors[0]?.id;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (const color of catalog.colors) {
+      const distance = colorDistance(normalized, color.hex.toLowerCase());
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = color.id;
+      }
+    }
+    return best ?? design.componentSelections[0]?.colorId ?? catalog.colors[0].id;
+  };
+
+  const paletteIds = colors.map(mapHexToColorId);
+  const primary = paletteIds[0];
+  const secondary = paletteIds[1] ?? primary;
+  const accent = paletteIds[2] ?? secondary;
+  const neutral = paletteIds[3] ?? catalog.colors.find((color) => color.name.toLowerCase().includes("black"))?.id ?? primary;
+
+  const updated = structuredClone(design);
+  updated.componentSelections = updated.componentSelections.map((selection) => {
+    if (selection.componentId.startsWith("lace-")) {
+      return { ...selection, colorId: accent };
+    }
+    if (selection.componentId.startsWith("stitching-")) {
+      return { ...selection, colorId: accent };
+    }
+    if (selection.componentId === "web") {
+      return { ...selection, colorId: secondary };
+    }
+    if (selection.componentId === "binding" || selection.componentId === "welting" || selection.componentId === "piping") {
+      return { ...selection, colorId: accent };
+    }
+    if (selection.componentId === "palm" || selection.componentId === "palm-overlay") {
+      return { ...selection, colorId: neutral };
+    }
+    return { ...selection, colorId: primary };
+  });
+
+  return updated;
+}
+
+function colorDistance(a: string, b: string) {
+  const [ar, ag, ab] = hexToRgb(a);
+  const [br, bg, bb] = hexToRgb(b);
+  return Math.sqrt((ar - br) ** 2 + (ag - bg) ** 2 + (ab - bb) ** 2);
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const cleaned = hex.replace("#", "");
+  if (cleaned.length === 3) {
+    const r = parseInt(cleaned[0] + cleaned[0], 16);
+    const g = parseInt(cleaned[1] + cleaned[1], 16);
+    const b = parseInt(cleaned[2] + cleaned[2], 16);
+    return [r, g, b];
+  }
+  if (cleaned.length === 6) {
+    const r = parseInt(cleaned.slice(0, 2), 16);
+    const g = parseInt(cleaned.slice(2, 4), 16);
+    const b = parseInt(cleaned.slice(4, 6), 16);
+    return [r, g, b];
+  }
+  return [0, 0, 0];
 }
 
 function selectPatternForDesign(design: CatalogDesign, catalog: SeedCatalog) {

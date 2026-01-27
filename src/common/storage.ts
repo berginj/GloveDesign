@@ -12,7 +12,8 @@ export async function writeBlob(
   path: string,
   content: Buffer | string,
   contentType: string,
-  jobId?: string
+  jobId?: string,
+  stage = "storage"
 ): Promise<BlobWriteResult> {
   const container = client.getContainerClient(containerName);
   await container.createIfNotExists();
@@ -20,6 +21,6 @@ export async function writeBlob(
   await blockBlob.uploadData(content, {
     blobHTTPHeaders: { blobContentType: contentType },
   });
-  logInfo("blob_written", { jobId }, { path });
+  logInfo("blob_written", { jobId, stage }, { path });
   return { path, url: blockBlob.url };
 }

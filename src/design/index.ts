@@ -1,67 +1,89 @@
 import { GloveDesign, GloveVariant, PaletteResult } from "../common/types";
 
+const MIN_CONTRAST = 2.2;
+
 export function generateDesign(jobId: string, teamUrl: string, logoUrl: string, logoBlobPath: string, palette: PaletteResult): GloveDesign {
   const variants: GloveVariant[] = [
     {
       id: "A",
       components: {
-        body: palette.primary.hex,
+        palm: palette.primary.hex,
+        back: palette.secondary.hex,
         web: palette.secondary.hex,
-        stitching: palette.accent.hex,
         laces: palette.neutral.hex,
+        stitching: palette.accent.hex,
+        binding: palette.secondary.hex,
+        wrist: palette.primary.hex,
+        logoPlacement: palette.accent.hex,
       },
-      notes: ["Classic layout with primary body and secondary web."],
+      notes: ["Classic layout with primary palm and secondary web."],
     },
     {
       id: "B",
       components: {
-        body: palette.secondary.hex,
+        palm: palette.secondary.hex,
+        back: palette.primary.hex,
         web: palette.primary.hex,
-        piping: palette.neutral.hex,
-        stitching: palette.primary.hex,
+        laces: palette.neutral.hex,
+        stitching: palette.accent.hex,
+        binding: palette.primary.hex,
+        wrist: palette.secondary.hex,
+        logoPlacement: palette.primary.hex,
       },
-      notes: ["High-contrast layout with inverted main colors."],
+      notes: ["Inverted contrast with bold web and back."],
     },
     {
       id: "C",
       components: {
-        body: palette.neutral.hex,
+        palm: palette.neutral.hex,
+        back: palette.neutral.hex,
         web: palette.primary.hex,
+        laces: palette.primary.hex,
         stitching: palette.accent.hex,
-        logo: palette.primary.hex,
+        binding: palette.secondary.hex,
+        wrist: palette.secondary.hex,
+        logoPlacement: palette.primary.hex,
       },
-      notes: ["Minimal base with primary accents."],
+      notes: ["Minimal neutral base with strong web and accents."],
     },
   ];
+
+  const adjusted = variants.map((variant) => adjustContrast(variant, palette.neutral.hex));
 
   return {
     jobId,
     team: { sourceUrl: teamUrl },
     logo: { url: logoUrl, blobPath: logoBlobPath },
     palette,
-    variants: variants.map((variant) => ({
-      ...variant,
-      notes: [...variant.notes, ...contrastNotes(variant)],
-    })),
+    variants: adjusted,
   };
 }
 
-function contrastNotes(variant: GloveVariant): string[] {
-  const notes: string[] = [];
-  const pairs: [string, string, string][] = [
-    [variant.components.body, variant.components.web, "body/web"],
-    [variant.components.body, variant.components.stitching ?? variant.components.piping ?? "#ffffff", "body/detail"],
+function adjustContrast(variant: GloveVariant, neutralHex: string): GloveVariant {
+  const notes = [...variant.notes];
+  const pairs: Array<[keyof GloveVariant["components"], keyof GloveVariant["components"], string]> = [
+    ["palm", "web", "palm/web"],
+    ["back", "web", "back/web"],
+    ["palm", "laces", "palm/laces"],
+    ["back", "binding", "back/binding"],
+    ["palm", "stitching", "palm/stitching"],
+    ["back", "wrist", "back/wrist"],
   ];
-  for (const [a, b, label] of pairs) {
-    if (!a || !b) {
+
+  for (const [baseKey, accentKey, label] of pairs) {
+    const base = variant.components[baseKey];
+    const accent = variant.components[accentKey];
+    if (!base || !accent) {
       continue;
     }
-    const ratio = contrastRatio(a, b);
-    if (ratio < 2.0) {
-      notes.push(`Low contrast on ${label} (${ratio.toFixed(2)})`);
+    const ratio = contrastRatio(base, accent);
+    if (ratio < MIN_CONTRAST) {
+      variant.components[accentKey] = neutralHex;
+      notes.push(`Adjusted ${label} to neutral for contrast (${ratio.toFixed(2)}).`);
     }
   }
-  return notes;
+
+  return { ...variant, notes };
 }
 
 export function contrastRatio(color1: string, color2: string): number {

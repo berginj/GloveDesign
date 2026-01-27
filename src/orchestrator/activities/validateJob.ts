@@ -1,8 +1,9 @@
 import { JobRequest } from "../../common/types";
-import { validateUrl } from "../../common/validation";
+import { ensureHttpScheme, validateUrlWithDns } from "../../common/validation";
 
 export default async function validateJob(input: JobRequest): Promise<{ ok: boolean; reason?: string }> {
-  const validation = validateUrl(input.teamUrl);
+  const normalizedUrl = ensureHttpScheme(input.teamUrl);
+  const validation = await validateUrlWithDns(normalizedUrl);
   if (!validation.ok) {
     return { ok: false, reason: validation.reason };
   }

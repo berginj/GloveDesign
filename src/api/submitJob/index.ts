@@ -1,9 +1,9 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import { v4 as uuidv4 } from "uuid";
-import { createCosmosClient, createServiceBusClient } from "../../common/azureClients";
+import { createServiceBusClient } from "../../common/azureClients";
 import { JobRecord, JobRequest } from "../../common/types";
-import { validateUrl } from "../../common/validation";
-import { CosmosJobStore } from "../../common/jobStore";
+import { ensureHttpScheme, validateUrlWithDns } from "../../common/validation";
+import { createJobStoreFromEnv } from "../../common/jobStore";
 
 export async function submitJob(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   const body = (await request.json().catch(() => null)) as JobRequest | null;
@@ -11,7 +11,12 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
     return { status: 400, jsonBody: { error: "teamUrl and mode are required." } };
   }
 
-  const validation = validateUrl(body.teamUrl);
+  if (body.mode !== "proposal" && body.mode !== "autofill") {
+    return { status: 400, jsonBody: { error: "mode must be proposal or autofill." } };
+  }
+
+  const normalizedUrl = ensureHttpScheme(body.teamUrl);
+  const validation = await validateUrlWithDns(normalizedUrl);
   if (!validation.ok) {
     return { status: 400, jsonBody: { error: validation.reason } };
   }
@@ -19,24 +24,20 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
   const jobId = uuidv4();
   const job: JobRecord = {
     jobId,
-    teamUrl: body.teamUrl,
+    teamUrl: normalizedUrl,
     mode: body.mode,
     stage: "received",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
-  const cosmosEndpoint = process.env.COSMOS_ENDPOINT;
-  const cosmosDb = process.env.COSMOS_DATABASE || "glovejobs";
-  const cosmosContainer = process.env.COSMOS_CONTAINER || "jobs";
-  if (cosmosEndpoint) {
-    const cosmosClient = createCosmosClient(cosmosEndpoint);
-    const store = new CosmosJobStore(cosmosClient, cosmosDb, cosmosContainer);
+  const store = createJobStoreFromEnv();
+  if (store) {
     await store.init();
     await store.upsertJob(job);
   }
 
-  const serviceBusNamespace = process.env.SERVICEBUS_NAMESPACE;
+  const serviceBusNamespace = process.env.SERVICEBUS_NAMESPACE || process.env.SERVICEBUS_CONNECTION;
   const queueName = process.env.SERVICEBUS_QUEUE || "glovejobs";
   if (!serviceBusNamespace) {
     return { status: 500, jsonBody: { error: "Service Bus namespace not configured." } };
@@ -44,7 +45,7 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
 
   const sbClient = createServiceBusClient(serviceBusNamespace);
   const sender = sbClient.createSender(queueName);
-  await sender.sendMessages({ body: { jobId, ...body } });
+  await sender.sendMessages({ body: { jobId, teamUrl: normalizedUrl, mode: body.mode } });
   await sender.close();
   await sbClient.close();
 

@@ -13,6 +13,10 @@ export interface JobRecord {
   createdAt: string;
   updatedAt: string;
   error?: string;
+  errorDetails?: string;
+  autofillAttempted?: boolean;
+  autofillSucceeded?: boolean;
+  wizardWarnings?: string[];
   outputs?: JobOutputs;
 }
 
@@ -33,7 +37,43 @@ export interface CrawlReport {
   skipped: string[];
   imageCandidates: ImageCandidate[];
   cssUrls: string[];
+  inlineStyles: string[];
   notes: string[];
+  robots: RobotsReport;
+  terms: TermsReport;
+  limits: CrawlLimits;
+  bytesDownloaded: number;
+  durationMs: number;
+  logoDecision?: LogoDecision;
+}
+
+export interface LogoDecision {
+  selectedUrl: string;
+  score: number;
+  reasons: string[];
+  analysis?: LogoAnalysis;
+}
+
+export interface RobotsReport {
+  checked: boolean;
+  allowed: boolean;
+  reason: string;
+}
+
+export interface TermsReport {
+  checked: boolean;
+  found: boolean;
+  urls: string[];
+  reason: string;
+}
+
+export interface CrawlLimits {
+  maxPages: number;
+  maxImages: number;
+  maxBytes: number;
+  maxPageBytes: number;
+  maxAssetBytes: number;
+  maxCssFiles: number;
 }
 
 export interface ImageCandidate {
@@ -43,6 +83,7 @@ export interface ImageCandidate {
   context?: string;
   width?: number;
   height?: number;
+  fileNameHint?: string;
   hints: string[];
 }
 
@@ -51,6 +92,16 @@ export interface LogoScore {
   score: number;
   reasons: string[];
   blobPath?: string;
+  analysis?: LogoAnalysis;
+}
+
+export interface LogoAnalysis {
+  width?: number;
+  height?: number;
+  aspectRatio?: number;
+  entropy?: number;
+  edgeDensity?: number;
+  alphaRatio?: number;
 }
 
 export interface PaletteColor {
@@ -82,24 +133,33 @@ export interface GloveDesign {
 }
 
 export interface JobOutputs {
-  logoUrl?: string;
-  logoBlobPath?: string;
-  paletteBlobPath?: string;
-  designBlobPath?: string;
-  proposalBlobPath?: string;
-  wizardSchemaBlobPath?: string;
-  configuredImageBlobPath?: string;
+  logo?: ArtifactLocation;
+  palette?: ArtifactLocation;
+  design?: ArtifactLocation;
+  proposal?: ArtifactLocation;
+  crawlReport?: ArtifactLocation;
+  wizardSchema?: ArtifactLocation;
+  configuredImage?: ArtifactLocation;
+}
+
+export interface ArtifactLocation {
+  path: string;
+  url: string;
 }
 
 export interface WizardRequest {
   jobId: string;
   design: GloveDesign;
-  blobBaseUrl: string;
-  logoBlobPath: string;
+  blobBaseUrl?: string;
+  logoBlobPath?: string;
 }
 
 export interface WizardResult {
-  schemaSnapshotPath: string;
-  configuredImagePath?: string;
+  schemaSnapshot: ArtifactLocation;
+  configuredImage?: ArtifactLocation;
   warnings: string[];
+  autofillAttempted: boolean;
+  autofillSucceeded: boolean;
+  manualSteps?: string[];
+  mappingConfidence?: number;
 }

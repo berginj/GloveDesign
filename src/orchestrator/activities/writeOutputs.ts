@@ -1,6 +1,7 @@
 import { createBlobClient } from "../../common/azureClients";
+import { buildProposal } from "../../common/proposal";
 import { writeBlob } from "../../common/storage";
-import { CrawlReport, GloveDesign, JobOutputs, LogoScore, PaletteResult } from "../../common/types";
+import { ArtifactLocation, CrawlReport, GloveDesign, JobOutputs, LogoScore, PaletteResult, WizardResult } from "../../common/types";
 
 export default async function writeOutputsActivity(input: {
   jobId: string;
@@ -8,14 +9,20 @@ export default async function writeOutputsActivity(input: {
   logo: LogoScore;
   palette: PaletteResult;
   design: GloveDesign;
+  wizardResult?: WizardResult;
 }): Promise<JobOutputs> {
-  const blobUrl = process.env.BLOB_URL;
+  const blobUrl = process.env.BLOB_URL || process.env.BLOB_CONNECTION_STRING;
   const containerName = process.env.BLOB_CONTAINER || "glovejobs";
   if (!blobUrl) {
     return {};
   }
   const client = createBlobClient(blobUrl);
   const jobPath = `jobs/${input.jobId}`;
+  const container = client.getContainerClient(containerName);
+
+  const logoLocation = input.logo.blobPath
+    ? ({ path: input.logo.blobPath, url: container.getBlockBlobClient(input.logo.blobPath).url } satisfies ArtifactLocation)
+    : undefined;
 
   const paletteResult = await writeBlob(
     client,
@@ -23,7 +30,8 @@ export default async function writeOutputsActivity(input: {
     `${jobPath}/palette.json`,
     JSON.stringify(input.palette, null, 2),
     "application/json",
-    input.jobId
+    input.jobId,
+    "outputs"
   );
 
   const designResult = await writeBlob(
@@ -32,65 +40,55 @@ export default async function writeOutputsActivity(input: {
     `${jobPath}/glove_design.json`,
     JSON.stringify(input.design, null, 2),
     "application/json",
-    input.jobId
+    input.jobId,
+    "outputs"
   );
 
-  const proposal = buildProposal(input.design, input.logo, input.palette, input.crawlReport);
+  const reportWithDecision: CrawlReport = {
+    ...input.crawlReport,
+    logoDecision: {
+      selectedUrl: input.logo.url,
+      score: input.logo.score,
+      reasons: input.logo.reasons,
+      analysis: input.logo.analysis,
+    },
+  };
+
+  const proposal = buildProposal(input.design, input.logo, input.palette, reportWithDecision, input.wizardResult);
   const proposalResult = await writeBlob(
     client,
     containerName,
     `${jobPath}/proposal.md`,
     proposal,
     "text/markdown",
-    input.jobId
+    input.jobId,
+    "outputs"
   );
 
-  await writeBlob(
+  const crawlResult = await writeBlob(
     client,
     containerName,
     `${jobPath}/crawl_report.json`,
-    JSON.stringify(input.crawlReport, null, 2),
+    JSON.stringify(reportWithDecision, null, 2),
     "application/json",
-    input.jobId
+    input.jobId,
+    "outputs"
   );
 
-  return {
-    logoUrl: input.logo.url,
-    logoBlobPath: input.logo.blobPath,
-    paletteBlobPath: paletteResult.path,
-    designBlobPath: designResult.path,
-    proposalBlobPath: proposalResult.path,
+  const outputs: JobOutputs = {
+    logo: logoLocation,
+    palette: { path: paletteResult.path, url: paletteResult.url },
+    design: { path: designResult.path, url: designResult.url },
+    proposal: { path: proposalResult.path, url: proposalResult.url },
+    crawlReport: { path: crawlResult.path, url: crawlResult.url },
   };
-}
 
-function buildProposal(design: GloveDesign, logo: LogoScore, palette: PaletteResult, report: CrawlReport): string {
-  const lines = [
-    `# Glove Design Proposal`,
-    ``,
-    `**Team URL:** ${design.team.sourceUrl}`,
-    `**Logo Candidate:** ${logo.url}`,
-    `**Logo Evidence:** ${logo.reasons.join("; ")}`,
-    ``,
-    `## Palette`,
-    `- Primary: ${palette.primary.hex} (${palette.primary.evidence.join(", ")})`,
-    `- Secondary: ${palette.secondary.hex} (${palette.secondary.evidence.join(", ")})`,
-    `- Accent: ${palette.accent.hex} (${palette.accent.evidence.join(", ")})`,
-    `- Neutral: ${palette.neutral.hex} (${palette.neutral.evidence.join(", ")})`,
-    ``,
-    `## Variants`,
-  ];
-
-  for (const variant of design.variants) {
-    lines.push(`### Variant ${variant.id}`);
-    lines.push(`- Components: ${JSON.stringify(variant.components)}`);
-    lines.push(`- Notes: ${variant.notes.join("; ")}`);
-    lines.push("");
+  if (input.wizardResult?.schemaSnapshot) {
+    outputs.wizardSchema = input.wizardResult.schemaSnapshot;
+  }
+  if (input.wizardResult?.configuredImage) {
+    outputs.configuredImage = input.wizardResult.configuredImage;
   }
 
-  if (report.notes.length > 0) {
-    lines.push("## Crawl Notes");
-    lines.push(...report.notes.map((note) => `- ${note}`));
-  }
-
-  return lines.join("\n");
+  return outputs;
 }

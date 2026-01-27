@@ -1,0 +1,33 @@
+{
+  "name": "glovedesign",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Azure-centric glove design automation pipeline",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint . --ext .ts",
+    "start:cli": "tsx src/cli/index.ts",
+    "start:func": "func start"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^3.18.0",
+    "@azure/functions": "^4.4.0",
+    "@azure/identity": "^4.2.0",
+    "@azure/service-bus": "^7.9.0",
+    "@azure/storage-blob": "^12.17.0",
+    "axios": "^1.6.8",
+    "cheerio": "^1.0.0-rc.12",
+    "durable-functions": "^3.2.0",
+    "playwright": "^1.43.0",
+    "sharp": "^0.33.3",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/uuid": "^9.0.8",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.3",
+    "vitest": "^1.5.0"
+  }
+}

@@ -1,0 +1,105 @@
+export type JobMode = "proposal" | "autofill";
+
+export interface JobRequest {
+  teamUrl: string;
+  mode: JobMode;
+}
+
+export interface JobRecord {
+  jobId: string;
+  teamUrl: string;
+  mode: JobMode;
+  stage: JobStage;
+  createdAt: string;
+  updatedAt: string;
+  error?: string;
+  outputs?: JobOutputs;
+}
+
+export type JobStage =
+  | "received"
+  | "validated"
+  | "crawled"
+  | "logo_selected"
+  | "colors_extracted"
+  | "design_generated"
+  | "wizard_attempted"
+  | "completed"
+  | "failed";
+
+export interface CrawlReport {
+  startUrl: string;
+  visited: string[];
+  skipped: string[];
+  imageCandidates: ImageCandidate[];
+  cssUrls: string[];
+  notes: string[];
+}
+
+export interface ImageCandidate {
+  url: string;
+  sourceUrl: string;
+  altText?: string;
+  context?: string;
+  width?: number;
+  height?: number;
+  hints: string[];
+}
+
+export interface LogoScore {
+  url: string;
+  score: number;
+  reasons: string[];
+  blobPath?: string;
+}
+
+export interface PaletteColor {
+  hex: string;
+  confidence: number;
+  evidence: string[];
+}
+
+export interface PaletteResult {
+  primary: PaletteColor;
+  secondary: PaletteColor;
+  accent: PaletteColor;
+  neutral: PaletteColor;
+  raw: PaletteColor[];
+}
+
+export interface GloveVariant {
+  id: "A" | "B" | "C";
+  components: Record<string, string>;
+  notes: string[];
+}
+
+export interface GloveDesign {
+  jobId: string;
+  team: { name?: string; sourceUrl: string };
+  logo: { url: string; blobPath: string };
+  palette: PaletteResult;
+  variants: GloveVariant[];
+}
+
+export interface JobOutputs {
+  logoUrl?: string;
+  logoBlobPath?: string;
+  paletteBlobPath?: string;
+  designBlobPath?: string;
+  proposalBlobPath?: string;
+  wizardSchemaBlobPath?: string;
+  configuredImageBlobPath?: string;
+}
+
+export interface WizardRequest {
+  jobId: string;
+  design: GloveDesign;
+  blobBaseUrl: string;
+  logoBlobPath: string;
+}
+
+export interface WizardResult {
+  schemaSnapshotPath: string;
+  configuredImagePath?: string;
+  warnings: string[];
+}

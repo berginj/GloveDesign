@@ -234,6 +234,18 @@ This repo includes `.github/workflows/deploy-infra.yml`. It uses Azure OIDC (no 
    - `WIZARD_IMAGE` (example: `ghcr.io/your-org/glove-wizard:latest`)
 5) Run the workflow manually (this repo does not auto-deploy infra on push).
 
+### Deploy Functions via GitHub Actions (manual)
+This repo includes `.github/workflows/deploy-functions.yml` for the Function App.
+
+1) Add GitHub repository secrets:
+   - `AZURE_CLIENT_ID`
+   - `AZURE_TENANT_ID`
+   - `AZURE_SUBSCRIPTION_ID`
+2) Add GitHub repository variables:
+   - `FUNCTION_APP_NAME` (example: `gloveapp-b4f0gvapbye9eda2`)
+   - `AZURE_RESOURCE_GROUP` (example: `glovedesign-rg`)
+3) Run the workflow manually.
+
 ### Deploy Functions and worker
 Deploy the Function App using your preferred CI/CD (GitHub Actions or `func azure functionapp publish`).
 Build and deploy the wizard worker container to Azure Container Apps Job or an HTTP-enabled container app and set `WIZARD_ENDPOINT` or `WIZARD_QUEUE` accordingly.

@@ -1,0 +1,50 @@
+name: deploy-functions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      FUNCTION_APP_NAME: ${{ vars.FUNCTION_APP_NAME }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build functions
+        run: npm run build
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Function App (zip)
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            if [ -z "$FUNCTION_APP_NAME" ] || [ -z "$AZURE_RESOURCE_GROUP" ]; then
+              echo "FUNCTION_APP_NAME and AZURE_RESOURCE_GROUP must be set as repo variables."
+              exit 1
+            fi
+            zip -r functionapp.zip . -x "node_modules/*" "frontend/*" ".git/*"
+            az functionapp deployment source config-zip \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --name "$FUNCTION_APP_NAME" \
+              --src functionapp.zip

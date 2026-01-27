@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { StartLanding } from "./components/StartLanding";
 import { WizardStep, WizardStepId } from "./components/WizardStep";
 import { GlovePreview } from "./components/GlovePreview";
 import { DesignSummary } from "./components/DesignSummary";
@@ -12,6 +13,7 @@ export function App() {
   const catalog = useMemo(() => loadSeedCatalog(), []);
   const [activeStep, setActiveStep] = useState<WizardStepId>("start");
   const [design, setDesign] = useState(() => buildInitialDesign(catalog));
+  const [started, setStarted] = useState(false);
 
   const update = (path: string, value: string) => {
     setDesign((prev) => updateDesignField(prev, path, value, catalog));
@@ -28,19 +30,33 @@ export function App() {
   return (
     <div className="app">
       <div className="panel">
-        <h2>Custom Glove Builder</h2>
-        <div className="step-nav">
-          {steps.map((step) => (
-            <button
-              key={step}
-              className={`step-button ${activeStep === step ? "active" : ""}`}
-              onClick={() => setActiveStep(step)}
-            >
-              {step.toUpperCase()}
-            </button>
-          ))}
-        </div>
-        <WizardStep step={activeStep} catalog={catalog} design={design} availableOptions={availableOptions} onUpdate={update} />
+        {!started ? (
+          <StartLanding
+            design={design}
+            catalog={catalog}
+            onUpdate={update}
+            onStart={() => {
+              setStarted(true);
+              setActiveStep("pattern");
+            }}
+          />
+        ) : (
+          <>
+            <h2>Custom Glove Builder</h2>
+            <div className="step-nav">
+              {steps.map((step) => (
+                <button
+                  key={step}
+                  className={`step-button ${activeStep === step ? "active" : ""}`}
+                  onClick={() => setActiveStep(step)}
+                >
+                  {step.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <WizardStep step={activeStep} catalog={catalog} design={design} availableOptions={availableOptions} onUpdate={update} />
+          </>
+        )}
       </div>
 
       <div className="panel preview">

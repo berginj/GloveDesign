@@ -85,6 +85,10 @@ To change the checkout handoff link, set `VITE_ORDER_URL` before running:
 ```bash
 VITE_ORDER_URL=https://aka.ms/myorder npm run dev
 ```
+To enable the team branding scan on the start page, point the UI to the Functions API:
+```bash
+VITE_API_BASE=https://<function-app>.azurewebsites.net VITE_FUNCTION_KEY=<optional> npm run dev
+```
 
 ## Azure deployment
 ## Azure components you must deploy

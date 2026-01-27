@@ -5,6 +5,7 @@ This document captures the product structure and implementation hooks for the gl
 ## Information Architecture
 1) Start
    - Sport, Position, Throwing Hand, Age Level
+   - Optional team branding scan (logo + palette) via the teams scraper pipeline
 2) Pattern & Size
    - Pattern library filtered by sport/position/age/hand
    - Pattern cards show size, web family, pocket depth, fit notes
@@ -28,6 +29,7 @@ This document captures the product structure and implementation hooks for the gl
 - Option panels grouped by category with swatches/selects/toggles
 - Review summary + pricing breakdown
 - Checkout stub with contact + shipping form + external order handoff (configurable URL)
+ - Start page with team URL scan + pre-builder launch
 
 ## Data Model (storage-level)
 - Brand { id, name }

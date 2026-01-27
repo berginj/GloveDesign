@@ -179,6 +179,48 @@ textarea {
   overflow: auto;
 }
 
+.start-landing .panel {
+  margin-bottom: 20px;
+}
+
+.start-header {
+  margin-bottom: 16px;
+}
+
+.start-header p {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.start-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.brand-result {
+  margin-top: 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.logo-preview {
+  margin-top: 8px;
+  background: #fff;
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+}
+
+.logo-preview img {
+  max-width: 100%;
+  max-height: 120px;
+}
+
 .cta {
   display: flex;
   gap: 8px;

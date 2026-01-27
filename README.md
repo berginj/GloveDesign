@@ -1,22 +1,62 @@
 # GloveDesign
 
-Azure-centric proof-of-concept for extracting youth baseball team branding and generating glove design proposals.
+Azure-centric proof-of-concept for extracting youth baseball team branding and generating glove design proposals with an optional Playwright autofill worker.
 
-## Architecture overview
-- **API**: Azure Functions (TypeScript) accepts `POST /jobs` and enqueues jobs to Service Bus.
-- **Orchestration**: Durable Functions drives validation → crawl → logo selection → color extraction → design variants → optional wizard autofill.
-- **Autofill worker**: Playwright container job invoked via HTTP for optional wizard automation.
-- **Storage**: Azure Blob Storage for artifacts; Cosmos DB for job status.
-- **Observability**: Application Insights via structured logs (jobId correlation).
+## Architecture
+```
+Client
+  |
+  v
+POST /jobs (Functions API) ---> Service Bus queue ---> Durable Orchestrator
+                                                       |-> validate + robots + crawl
+                                                       |-> logo scoring + palette
+                                                       |-> glove variants + proposal
+                                                       |-> Blob artifacts
+                                                       |-> Cosmos/Table job status
+                                                       |
+                                                       v
+                                                Wizard Worker (Playwright)
+                                                (HTTP or Service Bus job)
+```
 
 ## Local development
 ### Prerequisites
 - Node.js 20+
 - Azure Functions Core Tools v4
+- Azurite (Blob + Table)
 
 ### Install
 ```bash
 npm install
+```
+
+### Run Functions host
+```bash
+npm run dev
+```
+
+### Run wizard worker locally
+```bash
+npm run worker:dev
+```
+Set `WORKER_HEADLESS=false` for a visible browser window.
+
+### Local environment (Azurite)
+Use `UseDevelopmentStorage=true` for Blob + Table in local settings. Example `local.settings.json` values:
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "SERVICEBUS_CONNECTION": "<service bus connection string>",
+    "SERVICEBUS_QUEUE": "glovejobs",
+    "BLOB_CONNECTION_STRING": "UseDevelopmentStorage=true",
+    "BLOB_CONTAINER": "glovejobs",
+    "TABLE_CONNECTION_STRING": "UseDevelopmentStorage=true",
+    "TABLE_NAME": "jobs",
+    "WIZARD_ENDPOINT": "http://localhost:7072"
+  }
+}
 ```
 
 ### Run CLI (proposal mode locally)
@@ -29,15 +69,21 @@ Artifacts are written to `./local-output`.
 ### Environment variables
 | Variable | Purpose |
 | --- | --- |
-| `SERVICEBUS_NAMESPACE` | Service Bus namespace URL (e.g. `https://<name>.servicebus.windows.net`) |
-| `SERVICEBUS_QUEUE` | Queue name (default `glovejobs`) |
-| `SERVICEBUS_CONNECTION` | Service Bus connection setting for trigger binding |
+| `SERVICEBUS_NAMESPACE` | Service Bus namespace (e.g. `<name>.servicebus.windows.net`) |
+| `SERVICEBUS_QUEUE` | Queue name for job submission (default `glovejobs`) |
+| `SERVICEBUS_CONNECTION` | Connection string used by Function trigger and optional worker queue |
+| `WIZARD_QUEUE` | Optional wizard worker queue name (event-driven job) |
+| `WIZARD_RESULTS_QUEUE` | Optional wizard results queue (default `${WIZARD_QUEUE}-results`) |
 | `COSMOS_ENDPOINT` | Cosmos DB endpoint |
+| `COSMOS_CONNECTION_STRING` | Optional Cosmos connection string (local dev) |
 | `COSMOS_DATABASE` | Cosmos DB database name |
 | `COSMOS_CONTAINER` | Cosmos DB container name |
 | `BLOB_URL` | Storage account Blob endpoint |
+| `BLOB_CONNECTION_STRING` | Optional Blob connection string (local dev) |
 | `BLOB_CONTAINER` | Blob container name |
 | `BLOB_BASE_URL` | Base URL for blob (used by wizard worker) |
+| `TABLE_CONNECTION_STRING` | Optional Table connection string (local dev) |
+| `TABLE_NAME` | Table name (default `jobs`) |
 | `WIZARD_ENDPOINT` | Optional HTTP endpoint for Playwright worker |
 
 ### Deploy infrastructure
@@ -50,7 +96,7 @@ az deployment sub create \
 
 ### Deploy Functions and worker
 Deploy the Function App using your preferred CI/CD (GitHub Actions or `func azure functionapp publish`).
-Deploy the container worker image to Azure Container Apps Jobs and set `WIZARD_ENDPOINT` to its public endpoint.
+Build and deploy the wizard worker container to Azure Container Apps Job or an HTTP-enabled container app and set `WIZARD_ENDPOINT` or `WIZARD_QUEUE` accordingly.
 
 ## Example job submission
 ```bash
@@ -60,19 +106,46 @@ curl -X POST https://<function-app>.azurewebsites.net/api/jobs \
   -d '{"teamUrl":"https://arlingtontravelbaseball.org/","mode":"proposal"}'
 ```
 
+### Example job status request
+```bash
+curl -X GET https://<function-app>.azurewebsites.net/api/jobs/<jobId> \
+  -H "x-functions-key: <key>"
+```
+
+### Example status response (structure)
+```json
+{
+  "jobId": "uuid",
+  "teamUrl": "https://example.com",
+  "mode": "proposal",
+  "stage": "completed",
+  "status": "Succeeded",
+  "outputs": {
+    "logo": { "path": "jobs/<jobId>/logo.png", "url": "https://..." },
+    "palette": { "path": "jobs/<jobId>/palette.json", "url": "https://..." },
+    "design": { "path": "jobs/<jobId>/glove_design.json", "url": "https://..." },
+    "proposal": { "path": "jobs/<jobId>/proposal.md", "url": "https://..." },
+    "crawlReport": { "path": "jobs/<jobId>/crawl_report.json", "url": "https://..." },
+    "wizardSchema": { "path": "jobs/<jobId>/wizard_schema_snapshot.json", "url": "https://..." }
+  },
+  "autofillAttempted": false,
+  "autofillSucceeded": false
+}
+```
+
 ## Artifact structure
 - `/jobs/{jobId}/logo.(png|jpg|svg)`
 - `/jobs/{jobId}/palette.json`
 - `/jobs/{jobId}/glove_design.json`
 - `/jobs/{jobId}/proposal.md`
 - `/jobs/{jobId}/crawl_report.json`
-- `/jobs/{jobId}/wizard_schema_snapshot.json` (optional)
-- `/jobs/{jobId}/configured.png` (optional)
+- `/jobs/{jobId}/wizard_schema_snapshot.json` (autofill attempted)
+- `/jobs/{jobId}/configured.png` (autofill success only)
 
 ## Security posture
-- Input validation + SSRF mitigation (`http/https` only, block private IPs).
+- Input validation + SSRF mitigation (http/https only, block private IPs, DNS rebinding checks, redirect caps).
 - Robots.txt best-effort compliance.
-- Service Bus, Blob Storage, Cosmos DB accessed via Managed Identity.
+- Service Bus, Blob Storage, Cosmos DB accessed via Managed Identity when deployed.
 - Durable Functions activity retries should be configured for transient failures.
 - Allow/deny lists can be enforced at the API layer before enqueuing jobs.
 

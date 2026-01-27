@@ -13,7 +13,7 @@
     "worker:dev": "tsx src/worker/index.ts --server"
   },
   "dependencies": {
-    "@azure/cosmos": "^3.18.0",
+    "@azure/cosmos": "^3.17.3",
     "@azure/data-tables": "^14.1.0",
     "@azure/functions": "^4.4.0",
     "@azure/identity": "^4.2.0",

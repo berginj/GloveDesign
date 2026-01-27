@@ -5,7 +5,7 @@ const orchestrator = (df as any).orchestrator(function* (context: any): Generato
   const input = context.df.getInput() as JobRequest & { jobId: string };
   const jobId = input.jobId;
   try {
-    const validation = yield context.df.callActivity("validateJob", input);
+    const validation = (yield context.df.callActivity("validateJob", input)) as { ok: boolean; reason?: string };
     if (!validation.ok) {
       yield context.df.callActivity("updateJobStage", { jobId, stage: "failed", error: validation.reason });
       return { jobId, error: validation.reason };

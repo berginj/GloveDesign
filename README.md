@@ -89,6 +89,7 @@ To enable the team branding scan on the start page, point the UI to the Function
 ```bash
 VITE_API_BASE=https://<function-app>.azurewebsites.net VITE_FUNCTION_KEY=<optional> npm run dev
 ```
+In production (SWA), set `VITE_API_BASE` as a GitHub Actions variable and `VITE_FUNCTION_KEY` as a secret so the build can inject them.
 
 ## Azure deployment
 ## Azure components you must deploy

@@ -19,6 +19,8 @@ jobs:
        contents: read
     env:
       NODE_VERSION: "20"
+      VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+      VITE_FUNCTION_KEY: ${{ secrets.VITE_FUNCTION_KEY }}
     steps:
       - uses: actions/checkout@v3
         with:

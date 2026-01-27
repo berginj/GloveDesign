@@ -2,11 +2,6 @@ name: deploy-infra
 
 on:
   workflow_dispatch:
-  push:
-    branches: ["main"]
-    paths:
-      - "infra/**"
-      - ".github/workflows/deploy-infra.yml"
 
 jobs:
   deploy:

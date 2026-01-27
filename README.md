@@ -228,7 +228,7 @@ This repo includes `.github/workflows/deploy-infra.yml`. It uses Azure OIDC (no 
    - `AZURE_LOCATION` (example: `eastus`)
    - `PROJECT_NAME` (example: `glovedesign`)
    - `WIZARD_IMAGE` (example: `ghcr.io/your-org/glove-wizard:latest`)
-5) Run the workflow manually, or push a change under `infra/`.
+5) Run the workflow manually (this repo does not auto-deploy infra on push).
 
 ### Deploy Functions and worker
 Deploy the Function App using your preferred CI/CD (GitHub Actions or `func azure functionapp publish`).

@@ -95,8 +95,9 @@ If you deploy with `infra/main.bicep`, the template creates all of the above.
 ### 1) Deploy the Azure resources
 Use the Bicep template:
 ```bash
-az deployment sub create \
-  --location eastus \
+az group create --name glovedesign-rg --location eastus
+az deployment group create \
+  --resource-group glovedesign-rg \
   --template-file infra/main.bicep \
   --parameters location=eastus projectName=glovedesign
 ```
@@ -192,11 +193,28 @@ Look for:
 
 ### Deploy infrastructure
 ```bash
-az deployment sub create \
-  --location eastus \
+az group create --name glovedesign-rg --location eastus
+az deployment group create \
+  --resource-group glovedesign-rg \
   --template-file infra/main.bicep \
   --parameters location=eastus projectName=glovedesign
 ```
+
+### Deploy infrastructure via GitHub Actions (recommended)
+This repo includes `.github/workflows/deploy-infra.yml`. It uses Azure OIDC (no long-lived secrets).
+
+1) Create a service principal with access to your resource group (Contributor is enough).
+2) Add a federated credential for your GitHub repo/branch.
+3) Add GitHub repository secrets:
+   - `AZURE_CLIENT_ID`
+   - `AZURE_TENANT_ID`
+   - `AZURE_SUBSCRIPTION_ID`
+4) Add GitHub repository variables (optional defaults are already in the workflow):
+   - `AZURE_RESOURCE_GROUP` (example: `glovedesign-rg`)
+   - `AZURE_LOCATION` (example: `eastus`)
+   - `PROJECT_NAME` (example: `glovedesign`)
+   - `WIZARD_IMAGE` (example: `ghcr.io/your-org/glove-wizard:latest`)
+5) Run the workflow manually, or push a change under `infra/`.
 
 ### Deploy Functions and worker
 Deploy the Function App using your preferred CI/CD (GitHub Actions or `func azure functionapp publish`).

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "series-heritage-pro",
+    "brandId": "brand-heritage",
+    "name": "Heritage Pro",
+    "basePrice": 279,
+    "description": "Pro-level steerhide with classic shaping."
+  },
+  {
+    "id": "series-heritage-youth",
+    "brandId": "brand-heritage",
+    "name": "Heritage Youth",
+    "basePrice": 189,
+    "description": "Youth-focused fits and lighter break-in."
+  },
+  {
+    "id": "series-strike-elite",
+    "brandId": "brand-strike",
+    "name": "Strike Elite",
+    "basePrice": 299,
+    "description": "Premium kip leather with modular options."
+  },
+  {
+    "id": "series-strike-light",
+    "brandId": "brand-strike",
+    "name": "Strike Light",
+    "basePrice": 219,
+    "description": "Lightweight builds for fastpitch and utility."
+  }
+]

@@ -72,6 +72,20 @@ npm run start:cli -- https://arlingtontravelbaseball.org/
 ```
 Artifacts are written to `./local-output`.
 
+### Run the customizer UI (placeholder)
+The front-end scaffolding lives in `frontend/` (Vite + React).
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The UI uses the shared catalog JSON for now and calls the APIs later.
+See `docs/CUSTOMIZER.md` for the product spec, data model, and option engine notes.
+To change the checkout handoff link, set `VITE_ORDER_URL` before running:
+```bash
+VITE_ORDER_URL=https://aka.ms/myorder npm run dev
+```
+
 ## Azure deployment
 ## Azure components you must deploy
 These are the building blocks in Azure. Think of them like Lego pieces the app snaps together:

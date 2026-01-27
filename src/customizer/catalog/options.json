@@ -1,0 +1,452 @@
+[
+  {
+    "id": "opt-leather-steerhide",
+    "groupId": "leather-type",
+    "label": "Steerhide",
+    "description": "Durable classic leather.",
+    "priceRule": { "type": "flat", "amount": 0 },
+    "leadTimeRule": { "type": "days", "days": 0 }
+  },
+  {
+    "id": "opt-leather-kip",
+    "groupId": "leather-type",
+    "label": "Kip Leather",
+    "description": "Lighter feel with smooth finish.",
+    "priceRule": { "type": "flat", "amount": 25 },
+    "leadTimeRule": { "type": "days", "days": 4 }
+  },
+  {
+    "id": "opt-leather-pro-stock",
+    "groupId": "leather-type",
+    "label": "Pro Stock",
+    "description": "Premium, firm leather.",
+    "priceRule": { "type": "flat", "amount": 40 },
+    "leadTimeRule": { "type": "days", "days": 7 }
+  },
+  {
+    "id": "opt-overlay-none",
+    "groupId": "overlay-material",
+    "label": "No Overlay",
+    "description": "All-leather build.",
+    "priceRule": { "type": "flat", "amount": 0 }
+  },
+  {
+    "id": "opt-overlay-superskin",
+    "groupId": "overlay-material",
+    "label": "SuperSkin Style",
+    "description": "Lightweight synthetic overlay.",
+    "priceRule": { "type": "flat", "amount": 30 },
+    "leadTimeRule": { "type": "days", "days": 5 }
+  },
+  {
+    "id": "opt-overlay-snakeskin",
+    "groupId": "overlay-material",
+    "label": "Snake Texture",
+    "description": "Textured synthetic overlay.",
+    "priceRule": { "type": "flat", "amount": 35 },
+    "leadTimeRule": { "type": "days", "days": 6 }
+  },
+  {
+    "id": "opt-overlay-mesh",
+    "groupId": "overlay-material",
+    "label": "Mesh Backing",
+    "description": "Breathable mesh back panel.",
+    "availability": { "any": [{ "equals": ["sport", "fastpitch"] }, { "equals": ["sport", "slowpitch"] }] },
+    "priceRule": { "type": "flat", "amount": 15 }
+  },
+  {
+    "id": "opt-lining-standard",
+    "groupId": "lining-type",
+    "label": "Standard Lining",
+    "priceRule": { "type": "flat", "amount": 0 }
+  },
+  {
+    "id": "opt-lining-soft",
+    "groupId": "lining-type",
+    "label": "Soft Lining",
+    "priceRule": { "type": "flat", "amount": 10 },
+    "leadTimeRule": { "type": "days", "days": 2 }
+  },
+  {
+    "id": "opt-lining-moisture",
+    "groupId": "lining-type",
+    "label": "Moisture Wicking",
+    "priceRule": { "type": "flat", "amount": 12 },
+    "leadTimeRule": { "type": "days", "days": 3 }
+  },
+  {
+    "id": "opt-padding-standard",
+    "groupId": "padding-profile",
+    "label": "Standard Padding",
+    "priceRule": { "type": "flat", "amount": 0 }
+  },
+  {
+    "id": "opt-padding-extra-palm",
+    "groupId": "padding-profile",
+    "label": "Extra Palm Pad",
+    "priceRule": { "type": "flat", "amount": 15 },
+    "leadTimeRule": { "type": "days", "days": 3 }
+  },
+  {
+    "id": "opt-padding-extra-heel",
+    "groupId": "padding-profile",
+    "label": "Extra Heel Pad",
+    "priceRule": { "type": "flat", "amount": 12 },
+    "leadTimeRule": { "type": "days", "days": 2 }
+  },
+  {
+    "id": "opt-padding-moldable",
+    "groupId": "padding-profile",
+    "label": "Moldable Padding",
+    "priceRule": { "type": "flat", "amount": 20 },
+    "leadTimeRule": { "type": "days", "days": 4 }
+  },
+  {
+    "id": "opt-breakin-none",
+    "groupId": "break-in",
+    "label": "No Break-In",
+    "priceRule": { "type": "flat", "amount": 0 }
+  },
+  {
+    "id": "opt-breakin-standard",
+    "groupId": "break-in",
+    "label": "Standard Break-In",
+    "priceRule": { "type": "flat", "amount": 15 },
+    "leadTimeRule": { "type": "days", "days": 5 }
+  },
+  {
+    "id": "opt-breakin-pro",
+    "groupId": "break-in",
+    "label": "Factory Pro Break-In",
+    "priceRule": { "type": "flat", "amount": 35 },
+    "leadTimeRule": { "type": "days", "days": 7 }
+  },
+  {
+    "id": "opt-stiffness-soft",
+    "groupId": "stiffness",
+    "label": "Soft Feel",
+    "priceRule": { "type": "flat", "amount": 0 }
+  },
+  {
+    "id": "opt-stiffness-standard",
+    "groupId": "stiffness",
+    "label": "Balanced",
+    "priceRule": { "type": "flat", "amount": 0 }
+  },
+  {
+    "id": "opt-stiffness-firm",
+    "groupId": "stiffness",
+    "label": "Firm/Pro Stiff",
+    "priceRule": { "type": "flat", "amount": 5 }
+  },
+  {
+    "id": "opt-web-default",
+    "groupId": "web-type",
+    "label": "Use Pattern Default",
+    "description": "Keeps the default web for this pattern."
+  },
+  {
+    "id": "opt-web-h",
+    "groupId": "web-type",
+    "label": "H-Web",
+    "availability": { "includes": ["allowedWebTypes", "H-web"] }
+  },
+  {
+    "id": "opt-web-i",
+    "groupId": "web-type",
+    "label": "I-Web",
+    "availability": { "includes": ["allowedWebTypes", "I-web"] }
+  },
+  {
+    "id": "opt-web-mod-trap",
+    "groupId": "web-type",
+    "label": "Modified Trap",
+    "availability": { "includes": ["allowedWebTypes", "modified-trap"] }
+  },
+  {
+    "id": "opt-web-trap",
+    "groupId": "web-type",
+    "label": "Trap",
+    "availability": { "includes": ["allowedWebTypes", "trap"] }
+  },
+  {
+    "id": "opt-web-single-post",
+    "groupId": "web-type",
+    "label": "Single Post",
+    "availability": { "includes": ["allowedWebTypes", "single-post"] }
+  },
+  {
+    "id": "opt-web-two-piece",
+    "groupId": "web-type",
+    "label": "Two-Piece",
+    "availability": { "includes": ["allowedWebTypes", "two-piece"] }
+  },
+  {
+    "id": "opt-web-basket",
+    "groupId": "web-type",
+    "label": "Basket",
+    "availability": { "includes": ["allowedWebTypes", "basket"] }
+  },
+  {
+    "id": "opt-web-closed",
+    "groupId": "web-type",
+    "label": "Closed",
+    "availability": { "includes": ["allowedWebTypes", "closed"] }
+  },
+  {
+    "id": "opt-web-one-piece",
+    "groupId": "web-type",
+    "label": "One-Piece",
+    "availability": { "includes": ["allowedWebTypes", "one-piece"] }
+  },
+  {
+    "id": "opt-back-conventional",
+    "groupId": "back-style",
+    "label": "Conventional Back"
+  },
+  {
+    "id": "opt-back-open",
+    "groupId": "back-style",
+    "label": "Open Back",
+    "availability": { "includes": ["allowedBackStyles", "open-back"] }
+  },
+  {
+    "id": "opt-back-modified",
+    "groupId": "back-style",
+    "label": "Modified Open",
+    "availability": { "includes": ["allowedBackStyles", "modified-open"] }
+  },
+  {
+    "id": "opt-back-fastpitch",
+    "groupId": "back-style",
+    "label": "Fastpitch Open",
+    "availability": { "includes": ["allowedBackStyles", "fastpitch-open"] }
+  },
+  {
+    "id": "opt-wrist-standard",
+    "groupId": "wrist-fit",
+    "label": "Standard Fit"
+  },
+  {
+    "id": "opt-wrist-contour",
+    "groupId": "wrist-fit",
+    "label": "Contour Fit",
+    "availability": { "includes": ["allowedWristFits", "contour"] },
+    "priceRule": { "type": "flat", "amount": 12 }
+  },
+  {
+    "id": "opt-wrist-fastpitch",
+    "groupId": "wrist-fit",
+    "label": "Fastpitch Contour",
+    "availability": { "includes": ["allowedWristFits", "fastpitch-contour"] },
+    "priceRule": { "type": "flat", "amount": 10 }
+  },
+  {
+    "id": "opt-wrist-youth",
+    "groupId": "wrist-fit",
+    "label": "Youth Fit",
+    "availability": { "includes": ["allowedWristFits", "youth"] }
+  },
+  {
+    "id": "opt-welting-single",
+    "groupId": "welting-style",
+    "label": "Single Welting"
+  },
+  {
+    "id": "opt-welting-dual",
+    "groupId": "welting-style",
+    "label": "Dual Welting",
+    "priceRule": { "type": "flat", "amount": 10 }
+  },
+  {
+    "id": "opt-welting-decorative",
+    "groupId": "welting-style",
+    "label": "Decorative Welting",
+    "priceRule": { "type": "flat", "amount": 15 }
+  },
+  {
+    "id": "opt-welting-handsewn",
+    "groupId": "welting-style",
+    "label": "Hand-Sewn Welting",
+    "priceRule": { "type": "flat", "amount": 25 },
+    "leadTimeRule": { "type": "days", "days": 5 }
+  },
+  {
+    "id": "opt-lace-length-standard",
+    "groupId": "lace-length",
+    "label": "Standard Lace Length"
+  },
+  {
+    "id": "opt-lace-length-short",
+    "groupId": "lace-length",
+    "label": "Short Lace Length",
+    "priceRule": { "type": "flat", "amount": 5 }
+  },
+  {
+    "id": "opt-lace-length-long",
+    "groupId": "lace-length",
+    "label": "Long Lace Length",
+    "priceRule": { "type": "flat", "amount": 8 }
+  },
+  {
+    "id": "opt-pocket-shallow",
+    "groupId": "pocket-depth",
+    "label": "Shallow Pocket"
+  },
+  {
+    "id": "opt-pocket-medium",
+    "groupId": "pocket-depth",
+    "label": "Medium Pocket"
+  },
+  {
+    "id": "opt-pocket-deep",
+    "groupId": "pocket-depth",
+    "label": "Deep Pocket",
+    "priceRule": { "type": "flat", "amount": 10 }
+  },
+  {
+    "id": "opt-finger-shift-off",
+    "groupId": "finger-shift",
+    "label": "Standard Finger Stalls"
+  },
+  {
+    "id": "opt-finger-shift-on",
+    "groupId": "finger-shift",
+    "label": "Finger Shift",
+    "availability": { "equals": ["features.supportsFingerShift", true] },
+    "priceRule": { "type": "flat", "amount": 12 }
+  },
+  {
+    "id": "opt-lace-two-tone-off",
+    "groupId": "lace-two-tone",
+    "label": "Single Lace Color"
+  },
+  {
+    "id": "opt-lace-two-tone-on",
+    "groupId": "lace-two-tone",
+    "label": "Two-Tone Lace",
+    "availability": { "equals": ["features.laceTwoTone", true] },
+    "priceRule": { "type": "flat", "amount": 8 }
+  },
+  {
+    "id": "opt-thumb-pad-off",
+    "groupId": "thumb-pad",
+    "label": "No Thumb Pad"
+  },
+  {
+    "id": "opt-thumb-pad-on",
+    "groupId": "thumb-pad",
+    "label": "Thumb Pad",
+    "availability": { "equals": ["features.supportsThumbPad", true] },
+    "priceRule": { "type": "flat", "amount": 6 }
+  },
+  {
+    "id": "opt-pinky-pad-off",
+    "groupId": "pinky-pad",
+    "label": "No Pinky Pad"
+  },
+  {
+    "id": "opt-pinky-pad-on",
+    "groupId": "pinky-pad",
+    "label": "Pinky Pad",
+    "availability": { "equals": ["features.supportsPinkyPad", true] },
+    "priceRule": { "type": "flat", "amount": 6 }
+  },
+  {
+    "id": "opt-extra-heel-pad-off",
+    "groupId": "extra-heel-pad",
+    "label": "Standard Heel Pad"
+  },
+  {
+    "id": "opt-extra-heel-pad-on",
+    "groupId": "extra-heel-pad",
+    "label": "Extra Heel Pad",
+    "availability": { "equals": ["features.supportsExtraHeel", true] },
+    "priceRule": { "type": "flat", "amount": 8 },
+    "leadTimeRule": { "type": "days", "days": 2 }
+  },
+  {
+    "id": "opt-palm-stamp-standard",
+    "groupId": "palm-stamp",
+    "label": "Standard Stamp",
+    "availability": { "equals": ["features.supportsPalmStamp", true] }
+  },
+  {
+    "id": "opt-palm-stamp-script",
+    "groupId": "palm-stamp",
+    "label": "Script Stamp",
+    "availability": { "equals": ["features.supportsPalmStamp", true] },
+    "priceRule": { "type": "flat", "amount": 5 }
+  },
+  {
+    "id": "opt-palm-stamp-logo",
+    "groupId": "palm-stamp",
+    "label": "Logo Stamp",
+    "availability": { "equals": ["features.supportsPalmStamp", true] },
+    "priceRule": { "type": "flat", "amount": 8 }
+  },
+  {
+    "id": "opt-palm-stamp-custom",
+    "groupId": "palm-stamp",
+    "label": "Custom Text Stamp",
+    "availability": { "equals": ["features.supportsPalmStamp", true] },
+    "priceRule": { "type": "flat", "amount": 15 },
+    "leadTimeRule": { "type": "days", "days": 5 }
+  },
+  {
+    "id": "opt-name-embroidery-none",
+    "groupId": "name-embroidery",
+    "label": "No Name Embroidery"
+  },
+  {
+    "id": "opt-name-embroidery",
+    "groupId": "name-embroidery",
+    "label": "Name Embroidery",
+    "availability": { "equals": ["features.supportsNameEmbroidery", true] },
+    "priceRule": { "type": "flat", "amount": 12 }
+  },
+  {
+    "id": "opt-number-embroidery-none",
+    "groupId": "number-embroidery",
+    "label": "No Jersey Number"
+  },
+  {
+    "id": "opt-number-embroidery",
+    "groupId": "number-embroidery",
+    "label": "Number Embroidery",
+    "availability": { "equals": ["features.supportsNumberEmbroidery", true] },
+    "priceRule": { "type": "flat", "amount": 10 }
+  },
+  {
+    "id": "opt-patch-none",
+    "groupId": "patch-select",
+    "label": "No Patch"
+  },
+  {
+    "id": "opt-patch-star",
+    "groupId": "patch-select",
+    "label": "Star Patch",
+    "availability": { "equals": ["features.supportsPatch", true] },
+    "priceRule": { "type": "flat", "amount": 8 }
+  },
+  {
+    "id": "opt-patch-heritage",
+    "groupId": "patch-select",
+    "label": "Heritage Patch",
+    "availability": { "equals": ["features.supportsPatch", true] },
+    "priceRule": { "type": "flat", "amount": 10 }
+  },
+  {
+    "id": "opt-patch-strike",
+    "groupId": "patch-select",
+    "label": "StrikeForge Patch",
+    "availability": { "equals": ["features.supportsPatch", true] },
+    "priceRule": { "type": "flat", "amount": 10 }
+  },
+  {
+    "id": "opt-special-instructions",
+    "groupId": "special-instructions",
+    "label": "Special Instructions",
+    "uiMeta": { "controlType": "text", "maxChars": 250 }
+  }
+]

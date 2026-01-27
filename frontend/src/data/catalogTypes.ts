@@ -1,0 +1,17 @@
+export type {
+  Catalog,
+  Brand,
+  Series,
+  PatternFamily,
+  Pattern,
+  Component,
+  Color,
+  Material,
+  OptionGroup,
+  Option,
+  ComponentSelection,
+  DesignInput,
+  Personalization,
+  ValidationResult,
+  PriceBreakdown,
+} from "../../../src/customizer/types";

@@ -1,0 +1,8 @@
+[
+  { "id": "leather-steerhide", "name": "Steerhide", "type": "leather", "upcharge": 0, "notes": "Durable, classic feel." },
+  { "id": "leather-kip", "name": "Kip Leather", "type": "leather", "upcharge": 25, "notes": "Lightweight with smooth finish." },
+  { "id": "leather-pro-stock", "name": "Pro Stock", "type": "leather", "upcharge": 40, "notes": "Premium, firm leather." },
+  { "id": "synthetic-superskin", "name": "SuperSkin Style", "type": "synthetic", "upcharge": 30, "notes": "Lightweight synthetic overlay." },
+  { "id": "synthetic-snakeskin", "name": "Snake Texture", "type": "synthetic", "upcharge": 35, "notes": "Textured synthetic overlay." },
+  { "id": "mesh-back", "name": "Mesh Backing", "type": "mesh", "upcharge": 15, "notes": "Breathable mesh back panel." }
+]

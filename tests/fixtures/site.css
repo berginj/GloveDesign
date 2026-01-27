@@ -1,0 +1,8 @@
+:root {
+  --team-primary: #112233;
+  --team-secondary: rgb(200, 10, 20);
+}
+
+.hero {
+  background: #fefefe;
+}

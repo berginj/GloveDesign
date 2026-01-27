@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@azure/cosmos": "^3.17.3",
-    "@azure/data-tables": "^14.1.0",
+    "@azure/data-tables": "^13.3.2",
     "@azure/functions": "^4.4.0",
     "@azure/identity": "^4.2.0",
     "@azure/service-bus": "^7.9.0",

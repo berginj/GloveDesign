@@ -18,7 +18,8 @@ export async function writeBlob(
   const container = client.getContainerClient(containerName);
   await container.createIfNotExists();
   const blockBlob = container.getBlockBlobClient(path);
-  await blockBlob.uploadData(content, {
+  const payload = typeof content === "string" ? Buffer.from(content) : content;
+  await blockBlob.uploadData(payload, {
     blobHTTPHeaders: { blobContentType: contentType },
   });
   logInfo("blob_written", { jobId, stage }, { path });

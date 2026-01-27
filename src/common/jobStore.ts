@@ -22,15 +22,22 @@ export interface JobStore {
 }
 
 export class CosmosJobStore implements JobStore {
+  private client: CosmosClient;
+  private databaseId: string;
+  private containerId: string;
   private container: Container;
 
   constructor(client: CosmosClient, databaseId: string, containerId: string) {
+    this.client = client;
+    this.databaseId = databaseId;
+    this.containerId = containerId;
     this.container = client.database(databaseId).container(containerId);
   }
 
   async init(): Promise<void> {
-    await this.container.database.createIfNotExists({ id: this.container.database.id });
-    await this.container.database.containers.createIfNotExists({ id: this.container.id, partitionKey: "/jobId" });
+    const { database } = await this.client.databases.createIfNotExists({ id: this.databaseId });
+    await database.containers.createIfNotExists({ id: this.containerId, partitionKey: "/jobId" });
+    this.container = database.container(this.containerId);
   }
 
   async upsertJob(job: JobRecord): Promise<void> {

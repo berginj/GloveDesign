@@ -1,7 +1,7 @@
 import * as df from "durable-functions";
 import { CrawlReport, GloveDesign, JobOutputs, JobRequest, LogoScore, PaletteResult, WizardResult } from "../common/types";
 
-const orchestrator = df.orchestrator(function* (context) {
+const orchestrator = (df as any).orchestrator(function* (context: any) {
   const input = context.df.getInput() as JobRequest & { jobId: string };
   const jobId = input.jobId;
   try {

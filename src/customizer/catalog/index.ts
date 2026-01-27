@@ -18,15 +18,15 @@ export function loadCatalog(): Catalog {
   }
   cached = {
     version: version.version,
-    brands,
-    series,
-    patternFamilies,
-    patterns,
-    components,
-    colors,
-    materials,
-    optionGroups,
-    options,
+    brands: brands as Catalog["brands"],
+    series: series as Catalog["series"],
+    patternFamilies: patternFamilies as Catalog["patternFamilies"],
+    patterns: patterns as Catalog["patterns"],
+    components: components as Catalog["components"],
+    colors: colors as Catalog["colors"],
+    materials: materials as Catalog["materials"],
+    optionGroups: optionGroups as Catalog["optionGroups"],
+    options: options as Catalog["options"],
   };
   return cached;
 }

@@ -78,9 +78,17 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
 
   return (
     <div className="start-landing">
-      <div className="start-header">
-        <h2>Customize Your Glove</h2>
-        <p>Pick your key details up front, then launch into the builder with your team branding ready.</p>
+      <div className="hero-card">
+        <div>
+          <p className="hero-eyebrow">Custom glove builder</p>
+          <h2>Build a game-ready glove in minutes.</h2>
+          <p>Set your core details, pull in team colors, and launch into the full builder.</p>
+        </div>
+        <div className="hero-badges">
+          <span>Fastpitch-ready</span>
+          <span>Two-tone laces</span>
+          <span>Pro patterns</span>
+        </div>
       </div>
 
       <div className="start-grid">

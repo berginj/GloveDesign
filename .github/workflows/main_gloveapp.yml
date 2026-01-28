@@ -1,69 +1,37 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js project to Azure Function App - GloveApp
+name: Deploy Functions - GloveApp (Flex)
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
-  NODE_VERSION: '22.x' # set this to the node version to use (supports 8.x, 10.x, 12.x)
+  NODE_VERSION: "20"
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
-
-    steps:
-      - name: 'Checkout GitHub Action'
-        uses: actions/checkout@v4
-
-      - name: Setup Node ${{ env.NODE_VERSION }} Environment
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: 'Resolve Project Dependencies Using Npm'
-        shell: bash
-        run: |
-          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          npm install
-          npm run build --if-present
-          npm run test --if-present
-          popd
-
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-app
-          path: release.zip
-
   deploy:
     runs-on: ubuntu-latest
-    needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: node-app
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Unzip artifact for deployment
-        run: |
-          unzip release.zip
-          rm release.zip
-      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build functions
+        run: npm run build
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -71,11 +39,43 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3D94068A84A14ED593AD831D95E15053 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_849547E5EA744CDB8B5411B12BAE3596 }}
 
-      - name: 'Run Azure Functions Action'
-        uses: Azure/functions-action@v1
-        id: fa
+      - name: Ensure Flex runtime + app settings
+        uses: azure/CLI@v2
         with:
-          app-name: 'GloveApp'
-          slot-name: 'Production'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          
+          inlineScript: |
+            az resource update \
+              --resource-group GloveDesigner_group \
+              --name GloveApp \
+              --resource-type Microsoft.Web/sites \
+              --set properties.functionAppConfig.runtime.name=node properties.functionAppConfig.runtime.version=20
+            az functionapp config appsettings set \
+              --name GloveApp \
+              --resource-group GloveDesigner_group \
+              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing WEBSITE_RUN_FROM_PACKAGE=1 WEBSITE_NODE_DEFAULT_VERSION=~20
+
+      - name: Package functions
+        run: |
+          rm -rf _deploy
+          mkdir _deploy
+          cp host.json package.json package-lock.json _deploy/
+          cp -R dist _deploy/
+          cp -R node_modules _deploy/
+          cd _deploy
+          zip -r ../functionapp.zip .
+
+      - name: Deploy Function App (Flex zip)
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az functionapp deploy \
+              --resource-group GloveDesigner_group \
+              --name GloveApp \
+              --src-path functionapp.zip \
+              --type zip
+
+      - name: Restart and list functions
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az functionapp restart --resource-group GloveDesigner_group --name GloveApp
+            az functionapp function list --resource-group GloveDesigner_group --name GloveApp -o table

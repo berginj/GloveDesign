@@ -184,6 +184,29 @@ textarea {
   overflow: auto;
 }
 
+.step-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.step-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.step-header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.section-card {
+  background: #fff;
+  border: 1px solid rgba(225, 212, 194, 0.7);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 10px 24px rgba(92, 73, 50, 0.06);
+}
+
 .start-landing .panel {
   margin-bottom: 20px;
 }

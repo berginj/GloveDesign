@@ -34,76 +34,83 @@ export function PatternStep({ design, catalog, onUpdate }: PatternStepProps) {
   }, [catalog, design, sizeFilter, webFilter]);
 
   return (
-    <div>
-      <h3>Pattern & Size</h3>
-      <div className="field-grid">
-        <div>
-          <label>Brand</label>
-          <select value={design.brandId} onChange={(event) => onUpdate("brandId", event.target.value)}>
-            {catalog.brands.map((brand) => (
-              <option key={brand.id} value={brand.id}>
-                {brand.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label>Series</label>
-          <select value={design.seriesId} onChange={(event) => onUpdate("seriesId", event.target.value)}>
-            {catalog.series
-              .filter((series) => series.brandId === design.brandId)
-              .map((series) => (
-                <option key={series.id} value={series.id}>
-                  {series.name}
+    <div className="step-layout">
+      <div className="step-header">
+        <h3>Pattern & Size</h3>
+        <p>Choose a foundation pattern, then refine web style and fit.</p>
+      </div>
+      <div className="section-card">
+        <div className="field-grid">
+          <div>
+            <label>Brand</label>
+            <select value={design.brandId} onChange={(event) => onUpdate("brandId", event.target.value)}>
+              {catalog.brands.map((brand) => (
+                <option key={brand.id} value={brand.id}>
+                  {brand.name}
                 </option>
               ))}
-          </select>
-        </div>
-        <div>
-          <label>Pattern</label>
-          <select value={design.patternId} onChange={(event) => onUpdate("patternId", event.target.value)}>
-            {patterns.map((pattern) => (
-              <option key={pattern.id} value={pattern.id}>
-                {pattern.size} - {pattern.webFamily} - {pattern.typicalUse}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label>Filter Size</label>
-          <select value={sizeFilter} onChange={(event) => setSizeFilter(event.target.value)}>
-            <option value="all">All sizes</option>
-            {sizes.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label>Filter Web</label>
-          <select value={webFilter} onChange={(event) => setWebFilter(event.target.value)}>
-            <option value="all">All webs</option>
-            {webFamilies.map((web) => (
-              <option key={web} value={web}>
-                {web}
-              </option>
-            ))}
-          </select>
+            </select>
+          </div>
+          <div>
+            <label>Series</label>
+            <select value={design.seriesId} onChange={(event) => onUpdate("seriesId", event.target.value)}>
+              {catalog.series
+                .filter((series) => series.brandId === design.brandId)
+                .map((series) => (
+                  <option key={series.id} value={series.id}>
+                    {series.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div>
+            <label>Pattern</label>
+            <select value={design.patternId} onChange={(event) => onUpdate("patternId", event.target.value)}>
+              {patterns.map((pattern) => (
+                <option key={pattern.id} value={pattern.id}>
+                  {pattern.size} - {pattern.webFamily} - {pattern.typicalUse}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>Filter Size</label>
+            <select value={sizeFilter} onChange={(event) => setSizeFilter(event.target.value)}>
+              <option value="all">All sizes</option>
+              {sizes.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>Filter Web</label>
+            <select value={webFilter} onChange={(event) => setWebFilter(event.target.value)}>
+              <option value="all">All webs</option>
+              {webFamilies.map((web) => (
+                <option key={web} value={web}>
+                  {web}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
-      <div className="summary">
-        {patterns.length === 0 && <div>No patterns match the current filters.</div>}
-        {patterns
-          .filter((pattern) => pattern.id === design.patternId)
-          .map((pattern) => (
-            <div key={pattern.id}>
-              <strong>{pattern.size}" {pattern.webFamily}</strong>
-              <div>Use: {pattern.typicalUse}</div>
-              <div>Pocket: {pattern.pocketDepth}</div>
-              <div>Fit notes: {pattern.fitNotes}</div>
-            </div>
-          ))}
+      <div className="section-card">
+        <div className="summary">
+          {patterns.length === 0 && <div>No patterns match the current filters.</div>}
+          {patterns
+            .filter((pattern) => pattern.id === design.patternId)
+            .map((pattern) => (
+              <div key={pattern.id}>
+                <strong>{pattern.size}" {pattern.webFamily}</strong>
+                <div>Use: {pattern.typicalUse}</div>
+                <div>Pocket: {pattern.pocketDepth}</div>
+                <div>Fit notes: {pattern.fitNotes}</div>
+              </div>
+            ))}
+        </div>
       </div>
     </div>
   );

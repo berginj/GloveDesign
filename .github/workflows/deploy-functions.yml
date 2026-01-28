@@ -42,7 +42,7 @@ jobs:
           cp host.json package.json package-lock.json _deploy/
           cp -R dist _deploy/
           cd _deploy
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --omit=dev
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --omit=dev --omit=optional
           zip -r ../functionapp.zip .
 
       - name: Configure app settings (Flex-safe)

@@ -324,3 +324,5 @@ npm test
   - If using queues: verify `WIZARD_QUEUE` and `WIZARD_RESULTS_QUEUE`.
 - Wizard autofill fails immediately
   - Site may be blocked or require a login/captcha (this is expected; proposal-only still works).
+
+Note: This README is updated regularly during deployment troubleshooting.

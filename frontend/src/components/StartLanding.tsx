@@ -16,6 +16,7 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
   const [message, setMessage] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [palette, setPalette] = useState<PaletteResult | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
 
   const swatches = useMemo(() => {
     if (!palette) {
@@ -42,20 +43,63 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
       return;
     }
     setStatus("running");
-    setMessage("Scanning branding… this can take a minute.");
+    setMessage("Scanning branding… this can take a few minutes.");
     setLogoUrl(null);
     setPalette(null);
+    setJobId(null);
     try {
       const job = await startBrandingJob(teamUrl.trim());
+      setJobId(job.jobId);
       const start = Date.now();
       let result = await getJobStatus(job.jobId);
-      while (result.status !== "Succeeded" && result.status !== "Failed" && Date.now() - start < 120000) {
+      while (result.status !== "Succeeded" && result.status !== "Failed" && Date.now() - start < 600000) {
         await new Promise((resolve) => setTimeout(resolve, 2500));
         result = await getJobStatus(job.jobId);
       }
       if (result.status !== "Succeeded") {
         setStatus("error");
-        setMessage(result.error ?? "Branding job did not finish in time.");
+        setMessage(result.error ?? "Branding job did not finish in time. You can keep checking.");
+        return;
+      }
+      const logo = result.outputs?.logo?.url ?? null;
+      const paletteUrl = result.outputs?.palette?.url;
+      setLogoUrl(logo);
+      if (paletteUrl) {
+        const paletteData = await fetchPalette(paletteUrl);
+        setPalette(paletteData);
+        onBrandingReady({ logoUrl: logo, palette: paletteData });
+      } else {
+        onBrandingReady({ logoUrl: logo, palette: null });
+      }
+      setStatus("done");
+      setMessage("Branding captured. Review the palette below.");
+    } catch (error) {
+      setStatus("error");
+      setMessage((error as Error).message ?? "Branding scan failed.");
+    }
+  };
+
+  const continuePolling = async () => {
+    if (!canScan) {
+      setMessage("Branding scan requires VITE_API_BASE to point at the Functions API.");
+      return;
+    }
+    if (!jobId) {
+      setMessage("No active scan to check. Start a new scan.");
+      return;
+    }
+    setStatus("running");
+    setMessage("Still running… checking again.");
+    try {
+      const start = Date.now();
+      let result = await getJobStatus(jobId);
+      while (result.status !== "Succeeded" && result.status !== "Failed" && Date.now() - start < 600000) {
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+        result = await getJobStatus(jobId);
+      }
+      if (result.status !== "Succeeded") {
+        setStatus("error");
+        setMessage(result.error ?? "Branding job is still running. Try again in a bit.");
         return;
       }
       const logo = result.outputs?.logo?.url ?? null;
@@ -166,6 +210,13 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
           </div>
           {!canScan && <div className="summary">Set VITE_API_BASE to enable team branding scans.</div>}
           {message && <div className="summary">{message}</div>}
+          {status === "error" && (
+            <div className="cta">
+              <button className="secondary" onClick={continuePolling}>
+                Keep Checking
+              </button>
+            </div>
+          )}
           {(logoUrl || swatches.length > 0) && (
             <div className="brand-result">
               {logoUrl && (

@@ -56,7 +56,7 @@ jobs:
             az functionapp config appsettings set \
               --name "$FUNCTION_APP_NAME" \
               --resource-group "$AZURE_RESOURCE_GROUP" \
-              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing WEBSITE_RUN_FROM_PACKAGE=1 WEBSITE_NODE_DEFAULT_VERSION=~20
+              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing
 
       - name: Deploy Function App (zip)
         uses: azure/CLI@v2

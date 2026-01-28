@@ -54,7 +54,7 @@ jobs:
             az functionapp config appsettings set \
               --name GloveApp \
               --resource-group GloveDesigner_group \
-              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing WEBSITE_RUN_FROM_PACKAGE=1
+              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing
 
       - name: Package functions
         run: |

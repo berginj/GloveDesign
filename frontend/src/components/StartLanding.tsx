@@ -151,7 +151,14 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
           </div>
           <div className="cta">
             <button onClick={runScan} disabled={status === "running"}>
-              {status === "running" ? "Scanning…" : "Scan Branding"}
+              {status === "running" ? (
+                <>
+                  <span className="scan-spinner" aria-hidden="true" />
+                  Scanning…
+                </>
+              ) : (
+                "Scan Branding"
+              )}
             </button>
             <button className="secondary" onClick={onStart}>
               Skip for now

@@ -336,6 +336,17 @@ textarea {
   font-weight: 600;
 }
 
+.scan-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: rgba(255, 255, 255, 0.9);
+  display: inline-block;
+  margin-right: 8px;
+  animation: spin 0.9s linear infinite;
+}
+
 .cta button.secondary {
   background: transparent;
   border: 1px solid var(--accent);
@@ -376,6 +387,12 @@ textarea {
   }
   50% {
     filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.12));
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

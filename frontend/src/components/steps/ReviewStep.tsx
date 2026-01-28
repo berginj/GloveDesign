@@ -15,7 +15,10 @@ export function ReviewStep({ design, catalog }: ReviewStepProps) {
   return (
     <div className="step-layout">
       <div className="step-header">
-        <h3>Review</h3>
+        <h3>
+          <span className="step-icon">▣</span>
+          Review
+        </h3>
         <p>Check validation flags and see your price breakdown.</p>
       </div>
       <div className="section-card">

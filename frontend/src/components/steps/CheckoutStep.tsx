@@ -9,7 +9,10 @@ export function CheckoutStep({ design }: CheckoutStepProps) {
   return (
     <div className="step-layout">
       <div className="step-header">
-        <h3>Checkout (Stub)</h3>
+        <h3>
+          <span className="step-icon">▤</span>
+          Checkout (Stub)
+        </h3>
         <p>Collect shipping details and hand off the order.</p>
       </div>
       <div className="section-card">

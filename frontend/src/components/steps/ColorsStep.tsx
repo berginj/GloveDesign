@@ -10,7 +10,10 @@ export function ColorsStep({ design, catalog, onUpdate }: ColorsStepProps) {
   return (
     <div className="step-layout">
       <div className="step-header">
-        <h3>Component Colors</h3>
+        <h3>
+          <span className="step-icon">◐</span>
+          Component Colors
+        </h3>
         <p>Mix and match colors for every panel, lace, and accent.</p>
       </div>
       <div className="section-card">

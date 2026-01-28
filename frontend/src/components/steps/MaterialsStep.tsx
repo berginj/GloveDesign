@@ -20,7 +20,10 @@ export function MaterialsStep({ design, catalog, availableOptions, onUpdate }: M
   return (
     <div className="step-layout">
       <div className="step-header">
-        <h3>Base Materials</h3>
+        <h3>
+          <span className="step-icon">◧</span>
+          Base Materials
+        </h3>
         <p>Dial in the feel, break-in, and lining before you pick colors.</p>
       </div>
       <div className="section-card">

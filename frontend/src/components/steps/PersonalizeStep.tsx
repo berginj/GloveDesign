@@ -20,7 +20,10 @@ export function PersonalizeStep({ design, catalog, availableOptions, onUpdate }:
   return (
     <div className="step-layout">
       <div className="step-header">
-        <h3>Personalization</h3>
+        <h3>
+          <span className="step-icon">✶</span>
+          Personalization
+        </h3>
         <p>Add embroidery, palm stamps, or special notes for the build team.</p>
       </div>
       <div className="section-card">

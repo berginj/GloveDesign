@@ -36,7 +36,10 @@ export function PatternStep({ design, catalog, onUpdate }: PatternStepProps) {
   return (
     <div className="step-layout">
       <div className="step-header">
-        <h3>Pattern & Size</h3>
+        <h3>
+          <span className="step-icon">◎</span>
+          Pattern & Size
+        </h3>
         <p>Choose a foundation pattern, then refine web style and fit.</p>
       </div>
       <div className="section-card">

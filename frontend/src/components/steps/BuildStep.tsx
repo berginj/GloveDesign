@@ -27,7 +27,10 @@ export function BuildStep({ design, catalog, availableOptions, onUpdate }: Build
   return (
     <div className="step-layout">
       <div className="step-header">
-        <h3>Build Options</h3>
+        <h3>
+          <span className="step-icon">◈</span>
+          Build Options
+        </h3>
         <p>Set web type, wrist fit, padding add-ons, and lace details.</p>
       </div>
       <div className="section-card">

@@ -9,7 +9,10 @@ export function StartStep({ design, onUpdate }: StartStepProps) {
   return (
     <div className="step-layout">
       <div className="step-header">
-        <h3>Start</h3>
+        <h3>
+          <span className="step-icon">◆</span>
+          Start
+        </h3>
         <p>Choose the basics so we can filter patterns and options.</p>
       </div>
       <div className="section-card">

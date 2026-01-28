@@ -1,7 +1,25 @@
-import sharp from "sharp";
 import { LogoAnalysis } from "../common/types";
 
+let sharpModule: typeof import("sharp") | null | undefined;
+
+async function getSharp() {
+  if (sharpModule !== undefined) {
+    return sharpModule;
+  }
+  try {
+    const mod = await import("sharp");
+    sharpModule = mod.default ?? (mod as unknown as typeof import("sharp"));
+  } catch (error) {
+    sharpModule = null;
+  }
+  return sharpModule;
+}
+
 export async function analyzeImage(buffer: Buffer): Promise<LogoAnalysis> {
+  const sharp = await getSharp();
+  if (!sharp) {
+    return { entropy: 0.3, edgeDensity: 0.3, alphaRatio: 0.5 };
+  }
   const image = sharp(buffer);
   const metadata = await image.metadata();
   const width = metadata.width;

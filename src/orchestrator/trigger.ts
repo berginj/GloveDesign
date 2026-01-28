@@ -7,7 +7,8 @@ app.serviceBusQueue("jobQueueTrigger", {
   extraInputs: [df.input.durableClient()],
   handler: async (message: any, context: InvocationContext) => {
     const client = df.getClient(context) as any;
-    const instanceId = await client.startNew("jobOrchestrator", undefined, message);
+    const payload = message?.body ?? message;
+    const instanceId = await client.startNew("jobOrchestrator", undefined, payload);
     context.log(`Started orchestration with ID = '${instanceId}'.`);
   },
 });

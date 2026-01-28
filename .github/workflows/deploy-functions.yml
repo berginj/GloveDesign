@@ -23,7 +23,7 @@ jobs:
           cache: "npm"
 
       - name: Install deps
-        run: npm ci
+        run: npm install
 
       - name: Build functions
         run: npm run build
@@ -35,7 +35,16 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Function App (zip)
+      - name: Package functions
+        run: |
+          rm -rf _deploy
+          mkdir _deploy
+          cp host.json package.json package-lock.json _deploy/
+          cp -R dist _deploy/
+          cd _deploy
+          zip -r ../functionapp.zip .
+
+      - name: Configure app settings (Flex-safe)
         uses: azure/CLI@v2
         with:
           inlineScript: |
@@ -43,8 +52,17 @@ jobs:
               echo "FUNCTION_APP_NAME and AZURE_RESOURCE_GROUP must be set as repo variables."
               exit 1
             fi
-            zip -r functionapp.zip . -x "node_modules/*" "frontend/*" ".git/*"
-            az functionapp deployment source config-zip \
+            az functionapp config appsettings set \
+              --name "$FUNCTION_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing
+
+      - name: Deploy Function App (Flex zip)
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az functionapp deploy \
               --resource-group "$AZURE_RESOURCE_GROUP" \
               --name "$FUNCTION_APP_NAME" \
-              --src functionapp.zip
+              --src-path functionapp.zip \
+              --type zip

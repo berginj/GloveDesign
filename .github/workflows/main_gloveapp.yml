@@ -30,7 +30,7 @@ jobs:
           cache: "npm"
 
       - name: Install deps
-        run: npm ci
+        run: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci
 
       - name: Build functions
         run: npm run build
@@ -62,8 +62,8 @@ jobs:
           mkdir _deploy
           cp host.json package.json package-lock.json _deploy/
           cp -R dist _deploy/
-          cp -R node_modules _deploy/
           cd _deploy
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --omit=dev
           zip -r ../functionapp.zip .
 
       - name: Deploy Function App (Flex zip)

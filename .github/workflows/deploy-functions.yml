@@ -23,7 +23,7 @@ jobs:
           cache: "npm"
 
       - name: Install deps
-        run: npm install
+        run: npm ci
 
       - name: Build functions
         run: npm run build
@@ -41,6 +41,7 @@ jobs:
           mkdir _deploy
           cp host.json package.json package-lock.json _deploy/
           cp -R dist _deploy/
+          cp -R node_modules _deploy/
           cd _deploy
           zip -r ../functionapp.zip .
 
@@ -55,7 +56,7 @@ jobs:
             az functionapp config appsettings set \
               --name "$FUNCTION_APP_NAME" \
               --resource-group "$AZURE_RESOURCE_GROUP" \
-              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing
+              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing WEBSITE_RUN_FROM_PACKAGE=1 WEBSITE_NODE_DEFAULT_VERSION=~20
 
       - name: Deploy Function App (Flex zip)
         uses: azure/CLI@v2
@@ -66,3 +67,10 @@ jobs:
               --name "$FUNCTION_APP_NAME" \
               --src-path functionapp.zip \
               --type zip
+
+      - name: Restart and verify functions
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az functionapp restart --resource-group "$AZURE_RESOURCE_GROUP" --name "$FUNCTION_APP_NAME"
+            az functionapp function list --resource-group "$AZURE_RESOURCE_GROUP" --name "$FUNCTION_APP_NAME" -o table

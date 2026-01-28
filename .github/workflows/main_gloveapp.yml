@@ -4,6 +4,9 @@
 name: Deploy Functions - GloveApp (Flex)
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 env:

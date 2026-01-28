@@ -1,8 +1,21 @@
-import sharp from "sharp";
 import { PaletteColor, PaletteResult } from "../common/types";
 import { safeFetchBuffer, safeFetchText } from "../common/http";
 
 const MAX_CSS_FILES = 4;
+let sharpModule: typeof import("sharp") | null | undefined;
+
+async function getSharp() {
+  if (sharpModule !== undefined) {
+    return sharpModule;
+  }
+  try {
+    const mod = await import("sharp");
+    sharpModule = mod.default ?? (mod as unknown as typeof import("sharp"));
+  } catch (error) {
+    sharpModule = null;
+  }
+  return sharpModule;
+}
 
 export async function extractPalette(logoUrl: string, cssUrls: string[], inlineStyles: string[] = []): Promise<PaletteResult> {
   const cssColors = await collectCssColors(cssUrls, inlineStyles);
@@ -63,6 +76,10 @@ async function collectCssColors(cssUrls: string[], inlineStyles: string[]): Prom
 
 async function collectLogoColors(logoUrl: string): Promise<PaletteColor[]> {
   try {
+    const sharp = await getSharp();
+    if (!sharp) {
+      return [];
+    }
     const response = await safeFetchBuffer(logoUrl, { timeoutMs: 15000, maxBytes: 2 * 1024 * 1024 });
     const image = sharp(response.data as Buffer);
     const resized = await image.resize(200, 200, { fit: "inside" }).raw().ensureAlpha().toBuffer();

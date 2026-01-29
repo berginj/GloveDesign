@@ -21,6 +21,7 @@ export function DebugPanel() {
   const [message, setMessage] = useState<string | null>(null);
   const [queueStatus, setQueueStatus] = useState<Record<string, unknown> | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [deadLetters, setDeadLetters] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     localStorage.setItem("debugFunctionKey", functionKey);
@@ -123,6 +124,20 @@ export function DebugPanel() {
     await runRequest("GET /api/debug/jobs", `${API_BASE}/api/debug/jobs?limit=25`, { headers });
   };
 
+  const loadDeadLetters = async () => {
+    if (!API_BASE) {
+      setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
+      return;
+    }
+    setMessage(null);
+    const body = await runRequest("GET /api/debug/deadletters", `${API_BASE}/api/debug/deadletters?limit=10`, {
+      headers,
+    });
+    if (body) {
+      setDeadLetters(body as Record<string, unknown>);
+    }
+  };
+
   const pingApi = async () => {
     if (!API_BASE) {
       setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
@@ -182,6 +197,9 @@ export function DebugPanel() {
             <button className="secondary" onClick={loadQueueStatus}>
               Queue Status
             </button>
+            <button className="secondary" onClick={loadDeadLetters}>
+              Dead Letters
+            </button>
             <button className="secondary" onClick={loadRecentJobs}>
               Recent Jobs
             </button>
@@ -195,6 +213,12 @@ export function DebugPanel() {
             <div className="summary">
               <strong>Queue</strong>
               <pre>{JSON.stringify(queueStatus, null, 2)}</pre>
+            </div>
+          )}
+          {deadLetters && (
+            <div className="summary">
+              <strong>Dead Letters</strong>
+              <pre>{JSON.stringify(deadLetters, null, 2)}</pre>
             </div>
           )}
         </div>

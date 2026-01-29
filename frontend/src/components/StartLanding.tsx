@@ -17,6 +17,8 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [palette, setPalette] = useState<PaletteResult | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [cached, setCached] = useState(false);
+  const [currentStage, setCurrentStage] = useState<string | null>(null);
 
   const swatches = useMemo(() => {
     if (!palette) {
@@ -47,14 +49,23 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
     setLogoUrl(null);
     setPalette(null);
     setJobId(null);
+    setCached(false);
+    setCurrentStage(null);
     try {
       const job = await startBrandingJob(teamUrl.trim());
+      setCached(Boolean(job.cached));
       setJobId(job.jobId);
       const start = Date.now();
       let result = await getJobStatus(job.jobId);
+      setCurrentStage(result.stage);
+      setMessage(`Scanning… stage: ${result.stage}`);
       while (result.status !== "Succeeded" && result.status !== "Failed" && Date.now() - start < 600000) {
         await new Promise((resolve) => setTimeout(resolve, 2500));
         result = await getJobStatus(job.jobId);
+        if (result.stage && result.stage !== currentStage) {
+          setCurrentStage(result.stage);
+          setMessage(`Scanning… stage: ${result.stage}`);
+        }
       }
       if (result.status !== "Succeeded") {
         setStatus("error");
@@ -72,7 +83,7 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
         onBrandingReady({ logoUrl: logo, palette: null });
       }
       setStatus("done");
-      setMessage("Branding captured. Review the palette below.");
+      setMessage(cached ? "Branding loaded from cache. Review the palette below." : "Branding captured. Review the palette below.");
     } catch (error) {
       setStatus("error");
       setMessage((error as Error).message ?? "Branding scan failed.");
@@ -93,9 +104,14 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
     try {
       const start = Date.now();
       let result = await getJobStatus(jobId);
+      setCurrentStage(result.stage);
       while (result.status !== "Succeeded" && result.status !== "Failed" && Date.now() - start < 600000) {
         await new Promise((resolve) => setTimeout(resolve, 2500));
         result = await getJobStatus(jobId);
+        if (result.stage && result.stage !== currentStage) {
+          setCurrentStage(result.stage);
+          setMessage(`Scanning… stage: ${result.stage}`);
+        }
       }
       if (result.status !== "Succeeded") {
         setStatus("error");
@@ -118,6 +134,40 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
       setStatus("error");
       setMessage((error as Error).message ?? "Branding scan failed.");
     }
+  };
+
+  const normalizeHex = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const withHash = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+    if (/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(withHash)) {
+      return withHash.toLowerCase();
+    }
+    return null;
+  };
+
+  const updatePaletteSlot = (slot: "primary" | "secondary" | "accent", value: string) => {
+    if (!palette) {
+      return;
+    }
+    const normalized = normalizeHex(value);
+    if (!normalized) {
+      return;
+    }
+    const current = palette[slot];
+    const updated: PaletteResult = {
+      ...palette,
+      [slot]: {
+        hex: normalized,
+        name: current?.name,
+        confidence: current?.confidence ?? 0.3,
+        evidence: [...(current?.evidence ?? []), "manual"],
+      },
+    };
+    setPalette(updated);
+    onBrandingReady({ logoUrl, palette: updated });
   };
 
   return (
@@ -182,7 +232,10 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
         </div>
 
         <div className="panel">
-          <h3>Team Branding Scan</h3>
+          <div className="panel-title">
+            <h3>Team Branding Scan</h3>
+            {cached && <span className="badge">Cached</span>}
+          </div>
           <div className="field-grid">
             <div>
               <label>Team Website</label>
@@ -210,6 +263,7 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
           </div>
           {!canScan && <div className="summary">Set VITE_API_BASE to enable team branding scans.</div>}
           {message && <div className="summary">{message}</div>}
+          {status === "running" && currentStage && <div className="summary">Stage: {currentStage}</div>}
           {status === "error" && (
             <div className="cta">
               <button className="secondary" onClick={continuePolling}>
@@ -232,7 +286,7 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
               )}
               {swatches.length > 0 && (
                 <div>
-                  <strong>Palette</strong>
+                  <strong>Recommended Palette</strong>
                   <div className="chip-row">
                     {swatches.map((color) => (
                       <div key={color.key} className="chip">
@@ -240,6 +294,47 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
                         {color.name ?? color.hex}
                       </div>
                     ))}
+                  </div>
+                  <div className="palette-editor">
+                    <div className="palette-row">
+                      <label>Primary</label>
+                      <div className="palette-inputs">
+                        <input
+                          type="color"
+                          value={palette?.primary?.hex ?? "#1f4b5a"}
+                          onChange={(event) => updatePaletteSlot("primary", event.target.value)}
+                        />
+                        <input
+                          value={palette?.primary?.hex ?? ""}
+                          onChange={(event) => updatePaletteSlot("primary", event.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="palette-row">
+                      <label>Secondary 1</label>
+                      <div className="palette-inputs">
+                        <input
+                          type="color"
+                          value={palette?.secondary?.hex ?? "#e39b4b"}
+                          onChange={(event) => updatePaletteSlot("secondary", event.target.value)}
+                        />
+                        <input
+                          value={palette?.secondary?.hex ?? ""}
+                          onChange={(event) => updatePaletteSlot("secondary", event.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="palette-row">
+                      <label>Secondary 2</label>
+                      <div className="palette-inputs">
+                        <input
+                          type="color"
+                          value={palette?.accent?.hex ?? "#c85a3d"}
+                          onChange={(event) => updatePaletteSlot("accent", event.target.value)}
+                        />
+                        <input value={palette?.accent?.hex ?? ""} onChange={(event) => updatePaletteSlot("accent", event.target.value)} />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

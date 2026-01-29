@@ -291,6 +291,24 @@ textarea {
   font-size: 12px;
 }
 
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(227, 155, 75, 0.2);
+  color: #b85a1a;
+  border: 1px solid rgba(227, 155, 75, 0.4);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .debug-page {
   display: grid;
   gap: 24px;
@@ -358,6 +376,33 @@ textarea {
   margin-top: 16px;
   display: grid;
   gap: 16px;
+}
+
+.palette-editor {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.palette-row {
+  display: grid;
+  gap: 8px;
+}
+
+.palette-inputs {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.palette-inputs input[type="color"] {
+  width: 48px;
+  height: 38px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(225, 212, 194, 0.9);
+  background: #fff;
 }
 
 .logo-preview {

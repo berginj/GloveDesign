@@ -34,7 +34,7 @@ export function DebugPanel() {
   const logResponse = async (label: string, response: Response) => {
     let body: unknown = null;
     try {
-      body = await response.json();
+      body = await response.clone().json();
     } catch {
       body = await response.text();
     }

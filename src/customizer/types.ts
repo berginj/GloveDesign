@@ -30,6 +30,7 @@ export interface PatternFamily {
   description?: string;
   sizeRange: string;
   defaultComponents: string[];
+  renderProfileId?: string;
 }
 
 export interface Pattern {
@@ -93,6 +94,7 @@ export interface Material {
   name: string;
   type: "leather" | "synthetic" | "mesh";
   upcharge: number;
+  textureId?: string;
   notes?: string;
 }
 
@@ -151,6 +153,84 @@ export interface Option {
   priceRule?: PriceRule;
   leadTimeRule?: LeadTimeRule;
   uiMeta?: OptionUI;
+  paletteConstraint?: PaletteConstraint;
+  materialRef?: string;
+}
+
+export interface ColorPalette {
+  id: string;
+  name: string;
+  description?: string;
+  colorIds: string[];
+  tags?: string[];
+  availability?: Rule;
+}
+
+export interface PaletteConstraint {
+  paletteIds: string[];
+  scope?: "all" | "components";
+  componentIds?: string[];
+  mode?: "restrict" | "prefer";
+}
+
+export interface Texture {
+  id: string;
+  name: string;
+  description?: string;
+  svgPattern: string;
+  scale?: number;
+}
+
+export interface RenderShape {
+  type: "path";
+  d: string;
+}
+
+export interface RenderLayer {
+  id: string;
+  componentId: string;
+  shape: RenderShape;
+  opacity?: number;
+  stroke?: string;
+  strokeWidth?: number;
+  textureId?: string;
+}
+
+export interface RenderView {
+  id: string;
+  label: string;
+  width: number;
+  height: number;
+  layers: RenderLayer[];
+}
+
+export interface RenderProfile {
+  id: string;
+  name: string;
+  familyIds: string[];
+  views: RenderView[];
+}
+
+export interface EmbroideryFont {
+  id: string;
+  name: string;
+  cssFamily: string;
+  weight?: number;
+  style?: string;
+  letterSpacing?: number;
+}
+
+export interface EmbroideryPlacement {
+  id: string;
+  name: string;
+  description?: string;
+  maxChars: number;
+  viewId: string;
+  x: number;
+  y: number;
+  rotation?: number;
+  scale?: number;
+  familyIds?: string[];
 }
 
 export interface ComponentSelection {
@@ -167,6 +247,13 @@ export interface Personalization {
   patchId?: string;
   palmStampId?: string;
   specialInstructions?: string;
+  embroidery?: Array<{
+    placementId: string;
+    text: string;
+    fontId: string;
+    threadColorId: string;
+    enabled?: boolean;
+  }>;
 }
 
 export interface DesignInput {
@@ -227,9 +314,14 @@ export interface Catalog {
   patterns: Pattern[];
   components: Component[];
   colors: Color[];
+  colorPalettes: ColorPalette[];
   materials: Material[];
+  textures: Texture[];
   optionGroups: OptionGroup[];
   options: Option[];
+  renderProfiles: RenderProfile[];
+  embroideryFonts: EmbroideryFont[];
+  embroideryPlacements: EmbroideryPlacement[];
 }
 
 export interface DesignContext {

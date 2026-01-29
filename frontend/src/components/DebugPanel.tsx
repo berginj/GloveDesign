@@ -154,6 +154,37 @@ export function DebugPanel() {
     }
   };
 
+  const fetchDurableStatus = async () => {
+    if (!API_BASE) {
+      setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
+      return;
+    }
+    if (!jobId.trim()) {
+      setMessage("Enter a jobId to inspect durable status.");
+      return;
+    }
+    setMessage(null);
+    await runRequest("GET /api/debug/durable/:id", `${API_BASE}/api/debug/durable/${jobId}?history=false&input=true`, {
+      headers,
+    });
+  };
+
+  const retryJob = async () => {
+    if (!API_BASE) {
+      setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
+      return;
+    }
+    if (!jobId.trim()) {
+      setMessage("Enter a jobId to retry.");
+      return;
+    }
+    setMessage(null);
+    await runRequest("POST /api/debug/retry/:id", `${API_BASE}/api/debug/retry/${jobId}`, {
+      method: "POST",
+      headers,
+    });
+  };
+
   const pingApi = async () => {
     if (!API_BASE) {
       setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
@@ -209,6 +240,12 @@ export function DebugPanel() {
             </button>
             <button className="secondary" onClick={checkStatus}>
               Check Status
+            </button>
+            <button className="secondary" onClick={retryJob}>
+              Retry Job
+            </button>
+            <button className="secondary" onClick={fetchDurableStatus}>
+              Durable Status
             </button>
             <button className="secondary" onClick={pingApi}>
               Ping API

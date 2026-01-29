@@ -11,6 +11,7 @@ interface GlovePreviewProps {
 export function GlovePreview({ design, logoUrl }: GlovePreviewProps) {
   const renderer = useMemo(() => new PlaceholderRenderer(), []);
   const [result, setResult] = useState<RenderResult | null>(null);
+  const [activeView, setActiveView] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -19,10 +20,12 @@ export function GlovePreview({ design, logoUrl }: GlovePreviewProps) {
         patternId: design.patternId,
         componentSelections: design.componentSelections,
         materialSelections: design.selectedOptions,
+        personalization: design.personalization,
       })
       .then((output) => {
         if (active) {
           setResult(output);
+          setActiveView(0);
         }
       });
     return () => {
@@ -30,9 +33,31 @@ export function GlovePreview({ design, logoUrl }: GlovePreviewProps) {
     };
   }, [design, renderer]);
 
+  const views = result?.views ?? [];
+  const active = views[activeView];
+
   return (
     <>
-      <div className="silhouette" />
+      <div className="preview-viewport">
+        {active ? (
+          <img src={active.url} alt={`Glove preview ${active.label}`} />
+        ) : (
+          <div className="silhouette" />
+        )}
+        {views.length > 1 && (
+          <div className="view-toggle">
+            {views.map((view, index) => (
+              <button
+                key={view.id}
+                className={index === activeView ? "active" : ""}
+                onClick={() => setActiveView(index)}
+              >
+                {view.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <div>
         <strong>Preview Components</strong>
         <div className="chip-row">
@@ -45,10 +70,6 @@ export function GlovePreview({ design, logoUrl }: GlovePreviewProps) {
               ))
             : "Rendering preview..."}
         </div>
-      </div>
-      <div>
-        <strong>Renderer Output</strong>
-        <div className="summary">{JSON.stringify(result, null, 2)}</div>
       </div>
       {logoUrl && (
         <div>

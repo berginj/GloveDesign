@@ -35,6 +35,14 @@
     "groupId": "overlay-material",
     "label": "SuperSkin Style",
     "description": "Lightweight synthetic overlay.",
+    "affectedComponents": ["shell-back", "shell-heel", "shell-wrist"],
+    "materialRef": "synthetic-superskin",
+    "paletteConstraint": {
+      "paletteIds": ["palette-modern-cool", "palette-neon", "palette-metallic"],
+      "scope": "components",
+      "componentIds": ["shell-back", "shell-heel", "shell-wrist"],
+      "mode": "prefer"
+    },
     "priceRule": { "type": "flat", "amount": 30 },
     "leadTimeRule": { "type": "days", "days": 5 }
   },
@@ -43,6 +51,14 @@
     "groupId": "overlay-material",
     "label": "Snake Texture",
     "description": "Textured synthetic overlay.",
+    "affectedComponents": ["shell-back", "shell-heel", "shell-wrist"],
+    "materialRef": "synthetic-snakeskin",
+    "paletteConstraint": {
+      "paletteIds": ["palette-metallic", "palette-pro-contrast"],
+      "scope": "components",
+      "componentIds": ["shell-back", "shell-heel", "shell-wrist"],
+      "mode": "restrict"
+    },
     "priceRule": { "type": "flat", "amount": 35 },
     "leadTimeRule": { "type": "days", "days": 6 }
   },
@@ -52,6 +68,14 @@
     "label": "Mesh Backing",
     "description": "Breathable mesh back panel.",
     "availability": { "any": [{ "equals": ["sport", "fastpitch"] }, { "equals": ["sport", "slowpitch"] }] },
+    "affectedComponents": ["shell-back", "shell-heel", "shell-wrist"],
+    "materialRef": "mesh-back",
+    "paletteConstraint": {
+      "paletteIds": ["palette-modern-cool", "palette-softball-pop"],
+      "scope": "components",
+      "componentIds": ["shell-back", "shell-heel", "shell-wrist"],
+      "mode": "prefer"
+    },
     "priceRule": { "type": "flat", "amount": 15 }
   },
   {
@@ -268,6 +292,12 @@
     "id": "opt-welting-handsewn",
     "groupId": "welting-style",
     "label": "Hand-Sewn Welting",
+    "paletteConstraint": {
+      "paletteIds": ["palette-classic-leather", "palette-pro-contrast"],
+      "scope": "components",
+      "componentIds": ["binding", "welting", "piping"],
+      "mode": "prefer"
+    },
     "priceRule": { "type": "flat", "amount": 25 },
     "leadTimeRule": { "type": "days", "days": 5 }
   },

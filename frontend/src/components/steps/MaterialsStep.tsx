@@ -5,7 +5,7 @@ interface MaterialsStepProps {
   design: CatalogDesign;
   catalog: SeedCatalog;
   availableOptions: Option[];
-  onUpdate: (path: string, value: string) => void;
+  onUpdate: (path: string, value: string | boolean) => void;
 }
 
 export function MaterialsStep({ design, catalog, availableOptions, onUpdate }: MaterialsStepProps) {
@@ -55,6 +55,7 @@ export function MaterialsStep({ design, catalog, availableOptions, onUpdate }: M
                 </option>
               ))}
             </select>
+            <div className="summary">Overlay choices can narrow the palette options available in the Colors step.</div>
           </div>
           <div>
             <label>Lining</label>

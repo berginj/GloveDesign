@@ -1,11 +1,21 @@
+import type { Personalization } from "../data/catalogTypes";
+
 export interface RenderInput {
   patternId: string;
+  patternFamilyId?: string;
   componentSelections: Array<{ componentId: string; colorId: string }>;
   materialSelections: Record<string, string>;
+  personalization?: Personalization;
+}
+
+export interface RenderViewResult {
+  id: string;
+  label: string;
+  url: string;
 }
 
 export interface RenderResult {
-  imageUrls: string[];
+  views: RenderViewResult[];
   colorChips: Array<{ componentId: string; hex: string; label: string }>;
 }
 

@@ -90,6 +90,9 @@ body::after {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   transition: transform 0.15s ease, background 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .step-button:hover {
@@ -100,6 +103,41 @@ body::after {
   background: var(--accent);
   color: white;
   border-color: var(--accent);
+}
+
+.step-button.incomplete {
+  border-color: rgba(200, 90, 61, 0.4);
+  color: #b85a1a;
+}
+
+.step-button.attention {
+  border-color: rgba(227, 155, 75, 0.5);
+  color: #b85a1a;
+}
+
+.step-button.complete {
+  border-color: rgba(31, 75, 90, 0.35);
+  color: var(--accent);
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background: var(--muted);
+}
+
+.step-dot.complete {
+  background: var(--accent);
+}
+
+.step-dot.attention {
+  background: #e39b4b;
+}
+
+.step-dot.incomplete {
+  background: #c85a3d;
 }
 
 .field-grid {
@@ -134,6 +172,41 @@ textarea {
   gap: 16px;
 }
 
+.preview-viewport {
+  background: #f7f0e6;
+  border-radius: 20px;
+  padding: 16px;
+  border: 1px solid rgba(225, 212, 194, 0.8);
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.preview-viewport img {
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.view-toggle button {
+  border-radius: 999px;
+  border: 1px solid rgba(225, 212, 194, 0.8);
+  background: #fff;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.view-toggle button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
 .silhouette {
   height: 230px;
   border-radius: 24px;
@@ -232,6 +305,29 @@ textarea {
   border-radius: 16px;
   padding: 18px;
   box-shadow: 0 10px 24px rgba(92, 73, 50, 0.06);
+}
+
+.placement-card {
+  background: #fffaf3;
+  border: 1px dashed rgba(225, 212, 194, 0.8);
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.placement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .start-landing .panel {

@@ -1,15 +1,24 @@
 import { CatalogDesign, SeedCatalog } from "../../data/seedCatalog";
 import { Option } from "../../data/catalogTypes";
+import { getAllowedColorsForComponent } from "../../engine/optionEngine";
 
 interface PersonalizeStepProps {
   design: CatalogDesign;
   catalog: SeedCatalog;
   availableOptions: Option[];
-  onUpdate: (path: string, value: string) => void;
+  onUpdate: (path: string, value: string | boolean) => void;
 }
 
 export function PersonalizeStep({ design, catalog, availableOptions, onUpdate }: PersonalizeStepProps) {
   const availableIds = new Set(availableOptions.map((option) => option.id));
+  const pattern = catalog.patterns.find((item) => item.id === design.patternId);
+  const placements = catalog.embroideryPlacements.filter((placement) =>
+    placement.familyIds?.length ? placement.familyIds.includes(pattern?.familyId ?? "") : true
+  );
+  const placementIndex = new Map(
+    (design.personalization.embroidery ?? []).map((entry, index) => [entry.placementId, index])
+  );
+  const threadColors = getAllowedColorsForComponent(design, catalog, "stitching-main");
 
   const optionsForGroup = (groupId: string) =>
     catalog.options.filter((option) => option.groupId === groupId).map((option) => ({
@@ -113,6 +122,66 @@ export function PersonalizeStep({ design, catalog, availableOptions, onUpdate }:
             <label>Custom Logo Upload</label>
             <input type="file" disabled />
           </div>
+        </div>
+      </div>
+      <div className="section-card">
+        <h4>Embroidery Placements</h4>
+        <p>Choose where to add text, then pick font and thread color.</p>
+        <div className="field-grid">
+          {placements.map((placement) => {
+            const index = placementIndex.get(placement.id);
+            if (index === undefined) {
+              return null;
+            }
+            const entry = design.personalization.embroidery?.[index];
+            return (
+              <div key={placement.id} className="placement-card">
+                <div className="placement-header">
+                  <strong>{placement.name}</strong>
+                  <label className="toggle">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(entry?.enabled)}
+                      onChange={(event) => onUpdate(`personalization.embroidery.${index}.enabled`, event.target.checked)}
+                    />
+                    <span>Enable</span>
+                  </label>
+                </div>
+                <label>Text</label>
+                <input
+                  value={entry?.text ?? ""}
+                  maxLength={placement.maxChars}
+                  onChange={(event) => onUpdate(`personalization.embroidery.${index}.text`, event.target.value)}
+                  placeholder={`Up to ${placement.maxChars} characters`}
+                  disabled={!entry?.enabled}
+                />
+                <label>Font</label>
+                <select
+                  value={entry?.fontId ?? catalog.embroideryFonts[0]?.id}
+                  onChange={(event) => onUpdate(`personalization.embroidery.${index}.fontId`, event.target.value)}
+                  disabled={!entry?.enabled}
+                >
+                  {catalog.embroideryFonts.map((font) => (
+                    <option key={font.id} value={font.id}>
+                      {font.name}
+                    </option>
+                  ))}
+                </select>
+                <label>Thread Color</label>
+                <select
+                  value={entry?.threadColorId ?? catalog.colors[0]?.id}
+                  onChange={(event) => onUpdate(`personalization.embroidery.${index}.threadColorId`, event.target.value)}
+                  disabled={!entry?.enabled}
+                >
+                  {threadColors.map((color) => (
+                    <option key={color.id} value={color.id}>
+                      {color.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

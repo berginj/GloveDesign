@@ -3,6 +3,7 @@
     "id": "family-infield",
     "name": "Infield Classic",
     "description": "Quick transfer, shallow pocket, narrow build.",
+    "renderProfileId": "render-infield",
     "sizeRange": "11.0-11.75",
     "defaultComponents": [
       "shell-thumb",
@@ -33,6 +34,7 @@
     "id": "family-outfield",
     "name": "Outfield Deep",
     "description": "Deeper pocket and longer reach.",
+    "renderProfileId": "render-outfield",
     "sizeRange": "12.0-13.5",
     "defaultComponents": [
       "shell-thumb",
@@ -63,6 +65,7 @@
     "id": "family-catcher",
     "name": "Catcher Mitt",
     "description": "Thicker padding with rounded pocket.",
+    "renderProfileId": "render-catcher",
     "sizeRange": "31-34",
     "defaultComponents": [
       "shell-thumb",
@@ -87,6 +90,7 @@
     "id": "family-firstbase",
     "name": "First Base Mitt",
     "description": "Wider pocket with scoop-friendly web.",
+    "renderProfileId": "render-firstbase",
     "sizeRange": "12.0-13.0",
     "defaultComponents": [
       "shell-thumb",
@@ -111,6 +115,7 @@
     "id": "family-fastpitch",
     "name": "Fastpitch Fit",
     "description": "Narrower hand stall and adjusted wrist opening.",
+    "renderProfileId": "render-fastpitch",
     "sizeRange": "11.5-13.0",
     "defaultComponents": [
       "shell-thumb",

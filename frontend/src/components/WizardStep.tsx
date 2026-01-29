@@ -16,7 +16,7 @@ interface WizardStepProps {
   catalog: SeedCatalog;
   design: CatalogDesign;
   availableOptions: Option[];
-  onUpdate: (path: string, value: string) => void;
+  onUpdate: (path: string, value: string | boolean) => void;
 }
 
 export function WizardStep({ step, catalog, design, availableOptions, onUpdate }: WizardStepProps) {

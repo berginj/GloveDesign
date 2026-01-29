@@ -1,0 +1,179 @@
+[
+  {
+    "id": "render-infield",
+    "name": "Infield Silhouette",
+    "familyIds": ["family-infield"],
+    "views": [
+      {
+        "id": "front",
+        "label": "Front",
+        "width": 320,
+        "height": 220,
+        "layers": [
+          { "id": "shell-back", "componentId": "shell-back", "shape": { "type": "path", "d": "M40 30 L250 20 L295 120 L230 190 L80 190 L20 120 Z" } },
+          { "id": "palm", "componentId": "palm", "shape": { "type": "path", "d": "M75 70 L225 60 L245 130 L200 170 L95 170 L60 120 Z" } },
+          { "id": "palm-overlay", "componentId": "palm-overlay", "shape": { "type": "path", "d": "M95 95 L205 90 L220 135 L190 160 L110 160 L85 125 Z" }, "opacity": 0.85 },
+          { "id": "web", "componentId": "web", "shape": { "type": "path", "d": "M25 95 L80 80 L95 135 L40 150 Z" } },
+          { "id": "shell-thumb", "componentId": "shell-thumb", "shape": { "type": "path", "d": "M230 60 L285 50 L305 110 L260 125 Z" } },
+          { "id": "shell-heel", "componentId": "shell-heel", "shape": { "type": "path", "d": "M80 170 L210 170 L195 205 L95 205 Z" } },
+          { "id": "shell-wrist", "componentId": "shell-wrist", "shape": { "type": "path", "d": "M120 190 L200 190 L210 215 L110 215 Z" } },
+          { "id": "binding", "componentId": "binding", "shape": { "type": "path", "d": "M40 30 L250 20 L295 120 L230 190 L80 190 L20 120 Z" }, "stroke": "currentColor", "strokeWidth": 4, "opacity": 0.6 }
+        ]
+      },
+      {
+        "id": "back",
+        "label": "Back",
+        "width": 320,
+        "height": 220,
+        "layers": [
+          { "id": "shell-back", "componentId": "shell-back", "shape": { "type": "path", "d": "M30 40 L255 30 L300 130 L230 195 L70 195 L15 130 Z" } },
+          { "id": "shell-thumb", "componentId": "shell-thumb", "shape": { "type": "path", "d": "M225 65 L285 55 L310 120 L260 135 Z" } },
+          { "id": "shell-heel", "componentId": "shell-heel", "shape": { "type": "path", "d": "M70 175 L220 175 L200 210 L90 210 Z" } },
+          { "id": "shell-wrist", "componentId": "shell-wrist", "shape": { "type": "path", "d": "M110 192 L205 192 L215 218 L105 218 Z" } },
+          { "id": "web", "componentId": "web", "shape": { "type": "path", "d": "M20 105 L85 90 L100 145 L35 160 Z" } },
+          { "id": "binding", "componentId": "binding", "shape": { "type": "path", "d": "M30 40 L255 30 L300 130 L230 195 L70 195 L15 130 Z" }, "stroke": "currentColor", "strokeWidth": 4, "opacity": 0.6 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "render-outfield",
+    "name": "Outfield Silhouette",
+    "familyIds": ["family-outfield"],
+    "views": [
+      {
+        "id": "front",
+        "label": "Front",
+        "width": 320,
+        "height": 220,
+        "layers": [
+          { "id": "shell-back", "componentId": "shell-back", "shape": { "type": "path", "d": "M30 20 L265 15 L310 120 L235 205 L65 205 L10 120 Z" } },
+          { "id": "palm", "componentId": "palm", "shape": { "type": "path", "d": "M65 65 L240 55 L265 135 L205 185 L85 185 L50 120 Z" } },
+          { "id": "palm-overlay", "componentId": "palm-overlay", "shape": { "type": "path", "d": "M85 90 L220 85 L240 135 L195 170 L105 170 L75 125 Z" }, "opacity": 0.85 },
+          { "id": "web", "componentId": "web", "shape": { "type": "path", "d": "M18 95 L85 78 L105 150 L35 165 Z" } },
+          { "id": "shell-thumb", "componentId": "shell-thumb", "shape": { "type": "path", "d": "M235 55 L295 45 L315 115 L270 130 Z" } },
+          { "id": "shell-heel", "componentId": "shell-heel", "shape": { "type": "path", "d": "M70 175 L225 175 L205 210 L90 210 Z" } },
+          { "id": "shell-wrist", "componentId": "shell-wrist", "shape": { "type": "path", "d": "M120 190 L205 190 L215 218 L110 218 Z" } },
+          { "id": "binding", "componentId": "binding", "shape": { "type": "path", "d": "M30 20 L265 15 L310 120 L235 205 L65 205 L10 120 Z" }, "stroke": "currentColor", "strokeWidth": 4, "opacity": 0.6 }
+        ]
+      },
+      {
+        "id": "back",
+        "label": "Back",
+        "width": 320,
+        "height": 220,
+        "layers": [
+          { "id": "shell-back", "componentId": "shell-back", "shape": { "type": "path", "d": "M25 30 L270 25 L315 130 L235 210 L55 210 L5 130 Z" } },
+          { "id": "shell-thumb", "componentId": "shell-thumb", "shape": { "type": "path", "d": "M235 60 L300 50 L320 120 L270 135 Z" } },
+          { "id": "shell-heel", "componentId": "shell-heel", "shape": { "type": "path", "d": "M60 180 L230 180 L210 214 L80 214 Z" } },
+          { "id": "shell-wrist", "componentId": "shell-wrist", "shape": { "type": "path", "d": "M110 192 L215 192 L225 220 L105 220 Z" } },
+          { "id": "web", "componentId": "web", "shape": { "type": "path", "d": "M15 105 L90 90 L110 160 L40 175 Z" } },
+          { "id": "binding", "componentId": "binding", "shape": { "type": "path", "d": "M25 30 L270 25 L315 130 L235 210 L55 210 L5 130 Z" }, "stroke": "currentColor", "strokeWidth": 4, "opacity": 0.6 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "render-catcher",
+    "name": "Catcher Mitt Silhouette",
+    "familyIds": ["family-catcher"],
+    "views": [
+      {
+        "id": "front",
+        "label": "Front",
+        "width": 320,
+        "height": 220,
+        "layers": [
+          { "id": "shell-back", "componentId": "shell-back", "shape": { "type": "path", "d": "M60 20 Q160 0 260 20 Q320 80 300 160 Q250 215 160 215 Q70 215 20 160 Q0 80 60 20 Z" } },
+          { "id": "palm", "componentId": "palm", "shape": { "type": "path", "d": "M80 70 Q160 50 240 70 Q280 110 255 160 Q210 190 160 190 Q110 190 70 160 Q45 110 80 70 Z" } },
+          { "id": "web", "componentId": "web", "shape": { "type": "path", "d": "M40 95 Q80 70 120 95 Q140 125 110 145 Q70 155 50 135 Z" } },
+          { "id": "shell-thumb", "componentId": "shell-thumb", "shape": { "type": "path", "d": "M210 60 Q260 50 280 90 Q285 125 250 135 Q220 135 205 115 Z" } },
+          { "id": "shell-heel", "componentId": "shell-heel", "shape": { "type": "path", "d": "M90 175 Q160 165 230 175 Q215 205 160 210 Q105 205 90 175 Z" } },
+          { "id": "binding", "componentId": "binding", "shape": { "type": "path", "d": "M60 20 Q160 0 260 20 Q320 80 300 160 Q250 215 160 215 Q70 215 20 160 Q0 80 60 20 Z" }, "stroke": "currentColor", "strokeWidth": 5, "opacity": 0.6 }
+        ]
+      },
+      {
+        "id": "back",
+        "label": "Back",
+        "width": 320,
+        "height": 220,
+        "layers": [
+          { "id": "shell-back", "componentId": "shell-back", "shape": { "type": "path", "d": "M55 25 Q160 5 265 25 Q320 90 300 170 Q250 215 160 215 Q70 215 20 170 Q0 90 55 25 Z" } },
+          { "id": "shell-thumb", "componentId": "shell-thumb", "shape": { "type": "path", "d": "M210 65 Q260 55 285 95 Q290 135 255 145 Q225 145 205 120 Z" } },
+          { "id": "shell-heel", "componentId": "shell-heel", "shape": { "type": "path", "d": "M85 180 Q160 170 235 180 Q215 210 160 215 Q105 210 85 180 Z" } },
+          { "id": "binding", "componentId": "binding", "shape": { "type": "path", "d": "M55 25 Q160 5 265 25 Q320 90 300 170 Q250 215 160 215 Q70 215 20 170 Q0 90 55 25 Z" }, "stroke": "currentColor", "strokeWidth": 5, "opacity": 0.6 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "render-firstbase",
+    "name": "First Base Mitt Silhouette",
+    "familyIds": ["family-firstbase"],
+    "views": [
+      {
+        "id": "front",
+        "label": "Front",
+        "width": 320,
+        "height": 220,
+        "layers": [
+          { "id": "shell-back", "componentId": "shell-back", "shape": { "type": "path", "d": "M30 25 L260 10 L310 110 L250 200 L70 210 L10 120 Z" } },
+          { "id": "palm", "componentId": "palm", "shape": { "type": "path", "d": "M60 70 L235 60 L260 135 L210 185 L90 190 L50 120 Z" } },
+          { "id": "web", "componentId": "web", "shape": { "type": "path", "d": "M20 90 L90 70 L120 150 L45 170 Z" } },
+          { "id": "shell-thumb", "componentId": "shell-thumb", "shape": { "type": "path", "d": "M230 55 L295 40 L315 105 L270 125 Z" } },
+          { "id": "shell-heel", "componentId": "shell-heel", "shape": { "type": "path", "d": "M70 180 L230 180 L210 215 L90 215 Z" } },
+          { "id": "binding", "componentId": "binding", "shape": { "type": "path", "d": "M30 25 L260 10 L310 110 L250 200 L70 210 L10 120 Z" }, "stroke": "currentColor", "strokeWidth": 4, "opacity": 0.6 }
+        ]
+      },
+      {
+        "id": "back",
+        "label": "Back",
+        "width": 320,
+        "height": 220,
+        "layers": [
+          { "id": "shell-back", "componentId": "shell-back", "shape": { "type": "path", "d": "M25 35 L270 20 L320 120 L255 205 L60 215 L5 125 Z" } },
+          { "id": "shell-thumb", "componentId": "shell-thumb", "shape": { "type": "path", "d": "M235 60 L300 45 L320 110 L275 130 Z" } },
+          { "id": "shell-heel", "componentId": "shell-heel", "shape": { "type": "path", "d": "M65 185 L235 185 L215 218 L85 218 Z" } },
+          { "id": "binding", "componentId": "binding", "shape": { "type": "path", "d": "M25 35 L270 20 L320 120 L255 205 L60 215 L5 125 Z" }, "stroke": "currentColor", "strokeWidth": 4, "opacity": 0.6 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "render-fastpitch",
+    "name": "Fastpitch Silhouette",
+    "familyIds": ["family-fastpitch"],
+    "views": [
+      {
+        "id": "front",
+        "label": "Front",
+        "width": 320,
+        "height": 220,
+        "layers": [
+          { "id": "shell-back", "componentId": "shell-back", "shape": { "type": "path", "d": "M45 25 L245 15 L290 115 L220 190 L85 195 L25 120 Z" } },
+          { "id": "palm", "componentId": "palm", "shape": { "type": "path", "d": "M80 70 L215 60 L240 125 L195 170 L100 175 L65 120 Z" } },
+          { "id": "palm-overlay", "componentId": "palm-overlay", "shape": { "type": "path", "d": "M95 92 L205 85 L220 130 L190 160 L110 165 L85 125 Z" }, "opacity": 0.85 },
+          { "id": "web", "componentId": "web", "shape": { "type": "path", "d": "M28 95 L80 80 L95 135 L40 150 Z" } },
+          { "id": "shell-thumb", "componentId": "shell-thumb", "shape": { "type": "path", "d": "M220 60 L275 48 L295 110 L250 125 Z" } },
+          { "id": "shell-heel", "componentId": "shell-heel", "shape": { "type": "path", "d": "M85 175 L210 175 L195 205 L100 205 Z" } },
+          { "id": "shell-wrist", "componentId": "shell-wrist", "shape": { "type": "path", "d": "M120 190 L195 190 L205 212 L110 212 Z" } },
+          { "id": "binding", "componentId": "binding", "shape": { "type": "path", "d": "M45 25 L245 15 L290 115 L220 190 L85 195 L25 120 Z" }, "stroke": "currentColor", "strokeWidth": 4, "opacity": 0.6 }
+        ]
+      },
+      {
+        "id": "back",
+        "label": "Back",
+        "width": 320,
+        "height": 220,
+        "layers": [
+          { "id": "shell-back", "componentId": "shell-back", "shape": { "type": "path", "d": "M38 35 L250 25 L295 125 L225 195 L75 200 L18 125 Z" } },
+          { "id": "shell-thumb", "componentId": "shell-thumb", "shape": { "type": "path", "d": "M225 62 L280 50 L300 115 L255 132 Z" } },
+          { "id": "shell-heel", "componentId": "shell-heel", "shape": { "type": "path", "d": "M75 180 L215 180 L200 210 L90 210 Z" } },
+          { "id": "shell-wrist", "componentId": "shell-wrist", "shape": { "type": "path", "d": "M115 192 L205 192 L215 215 L110 215 Z" } },
+          { "id": "web", "componentId": "web", "shape": { "type": "path", "d": "M22 105 L85 90 L102 145 L35 160 Z" } },
+          { "id": "binding", "componentId": "binding", "shape": { "type": "path", "d": "M38 35 L250 25 L295 125 L225 195 L75 200 L18 125 Z" }, "stroke": "currentColor", "strokeWidth": 4, "opacity": 0.6 }
+        ]
+      }
+    ]
+  }
+]

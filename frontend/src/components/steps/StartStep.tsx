@@ -2,7 +2,7 @@ import { CatalogDesign } from "../../data/seedCatalog";
 
 interface StartStepProps {
   design: CatalogDesign;
-  onUpdate: (path: string, value: string) => void;
+  onUpdate: (path: string, value: string | boolean) => void;
 }
 
 export function StartStep({ design, onUpdate }: StartStepProps) {

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "palette-classic-leather",
+    "name": "Classic Leather",
+    "description": "Traditional glove tones with warm neutrals.",
+    "colorIds": ["color-tan", "color-saddle", "color-camel", "color-brown", "color-cream", "color-black", "color-walnut", "color-chestnut"],
+    "tags": ["classic", "leather"]
+  },
+  {
+    "id": "palette-pro-contrast",
+    "name": "Pro Contrast",
+    "description": "High-contrast, camera-ready combinations.",
+    "colorIds": ["color-black", "color-white", "color-royal-blue", "color-red", "color-gold", "color-charcoal"],
+    "tags": ["contrast", "pro"]
+  },
+  {
+    "id": "palette-modern-cool",
+    "name": "Modern Cool",
+    "description": "Cool blues and clean grays.",
+    "colorIds": ["color-navy", "color-slate", "color-steel", "color-columbia", "color-carolina", "color-gray", "color-ice-blue"],
+    "tags": ["cool", "modern"]
+  },
+  {
+    "id": "palette-neon",
+    "name": "Neon Punch",
+    "description": "Synthetic-friendly neon highlights.",
+    "colorIds": ["color-neon-yellow", "color-neon-green", "color-neon-orange", "color-neon-pink", "color-hot-pink", "color-aqua"],
+    "tags": ["neon", "synthetic"]
+  },
+  {
+    "id": "palette-metallic",
+    "name": "Metallic Accents",
+    "description": "Metallic finishes for stitching and trim.",
+    "colorIds": ["color-gold", "color-silver", "color-copper", "color-rose-gold", "color-metallic-blue", "color-metallic-red", "color-metallic-green"],
+    "tags": ["metallic"]
+  },
+  {
+    "id": "palette-softball-pop",
+    "name": "Softball Pop",
+    "description": "Brights and pastels built for fastpitch energy.",
+    "colorIds": ["color-pink", "color-lavender", "color-seafoam", "color-sky-blue", "color-mint", "color-sand"],
+    "tags": ["fastpitch", "bright"]
+  }
+]

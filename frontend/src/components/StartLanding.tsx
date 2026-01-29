@@ -5,7 +5,7 @@ import { fetchPalette, getJobStatus, PaletteResult, startBrandingJob } from "../
 interface StartLandingProps {
   design: CatalogDesign;
   catalog: SeedCatalog;
-  onUpdate: (path: string, value: string) => void;
+  onUpdate: (path: string, value: string | boolean) => void;
   onStart: () => void;
   onBrandingReady: (payload: { logoUrl: string | null; palette: PaletteResult | null }) => void;
 }

@@ -7,6 +7,7 @@ import { DebugPanel } from "./components/DebugPanel";
 import { loadSeedCatalog } from "./data/seedCatalog";
 import { buildDesignContext, getAvailableOptions } from "./engine/optionEngine";
 import { applyPaletteToDesign, buildInitialDesign, updateDesignField } from "./state/designState";
+import { computeStepStatuses } from "./state/stepStatus";
 import type { PaletteResult } from "./api/branding";
 
 const steps: WizardStepId[] = ["start", "pattern", "materials", "colors", "build", "personalize", "review", "checkout"];
@@ -22,7 +23,7 @@ export function App() {
     palette: null,
   });
 
-  const update = (path: string, value: string) => {
+  const update = (path: string, value: string | boolean) => {
     setDesign((prev) => updateDesignField(prev, path, value, catalog));
   };
 
@@ -33,6 +34,7 @@ export function App() {
       return catalog.options;
     }
   }, [catalog, design]);
+  const stepStatuses = useMemo(() => computeStepStatuses(design, catalog), [design, catalog]);
 
   useEffect(() => {
     const handler = () => setIsDebug(window.location.hash === "#debug");
@@ -72,9 +74,10 @@ export function App() {
               {steps.map((step) => (
                 <button
                   key={step}
-                  className={`step-button ${activeStep === step ? "active" : ""}`}
+                  className={`step-button ${activeStep === step ? "active" : ""} ${stepStatuses[step]}`}
                   onClick={() => setActiveStep(step)}
                 >
+                  <span className={`step-dot ${stepStatuses[step]}`} />
                   {step.toUpperCase()}
                 </button>
               ))}

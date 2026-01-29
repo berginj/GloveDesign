@@ -55,7 +55,10 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
 
   const sbClient = createServiceBusClient(serviceBusNamespace);
   const sender = sbClient.createSender(queueName);
-  await sender.sendMessages({ body: { jobId, teamUrl: normalizedUrl, mode: body.mode } });
+  await sender.sendMessages({
+    body: { jobId, teamUrl: normalizedUrl, mode: body.mode },
+    contentType: "application/json",
+  });
   await sender.close();
   await sbClient.close();
 

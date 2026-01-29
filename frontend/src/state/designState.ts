@@ -34,11 +34,23 @@ export function buildInitialDesign(catalog: SeedCatalog): CatalogDesign {
       nameLine2: "",
       number: "",
       specialInstructions: "",
+      embroidery: catalog.embroideryPlacements.map((placement) => ({
+        placementId: placement.id,
+        text: "",
+        fontId: catalog.embroideryFonts[0]?.id ?? "font-block",
+        threadColorId: catalog.colors[0]?.id ?? "color-black",
+        enabled: false,
+      })),
     },
   };
 }
 
-export function updateDesignField(design: CatalogDesign, path: string, value: string, catalog?: SeedCatalog): CatalogDesign {
+export function updateDesignField(
+  design: CatalogDesign,
+  path: string,
+  value: string | boolean,
+  catalog?: SeedCatalog
+): CatalogDesign {
   const updated = structuredClone(design);
   const parts = path.split(".");
   let current: any = updated;

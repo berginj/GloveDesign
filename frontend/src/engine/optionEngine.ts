@@ -1,6 +1,9 @@
 export {
   buildDesignContext,
   getAvailableOptions,
+  getAvailablePalettes,
+  getPaletteAvailabilityForComponent,
+  getAllowedColorsForComponent,
   validateDesign,
   buildPriceBreakdown,
   evaluateRule,

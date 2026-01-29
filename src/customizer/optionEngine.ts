@@ -1,9 +1,11 @@
 import {
   Catalog,
+  ColorPalette,
   ComponentSelection,
   DesignContext,
   DesignInput,
   Option,
+  PaletteConstraint,
   PriceBreakdown,
   Rule,
   ValidationIssue,
@@ -75,6 +77,70 @@ export function evaluateRule(rule: Rule | undefined, context: DesignContext): bo
 
 export function getAvailableOptions(catalog: Catalog, context: DesignContext): Option[] {
   return catalog.options.filter((option) => evaluateRule(option.availability, context));
+}
+
+export function getAvailablePalettes(catalog: Catalog, context: DesignContext): ColorPalette[] {
+  return catalog.colorPalettes.filter((palette) => evaluateRule(palette.availability, context));
+}
+
+export function getPaletteAvailabilityForComponent(
+  design: DesignInput,
+  catalog: Catalog,
+  componentId: string
+): { allowedPaletteIds: string[]; preferredPaletteIds: string[]; restricted: boolean } {
+  const context = buildDesignContext(design, catalog);
+  const availablePaletteIds = getAvailablePalettes(catalog, context).map((palette) => palette.id);
+  const selectedOptionIds = flattenSelectedOptions(design.selectedOptions);
+  const optionMap = new Map(catalog.options.map((option) => [option.id, option]));
+
+  let allowedPaletteIds = [...availablePaletteIds];
+  const preferred = new Set<string>();
+  let restricted = false;
+
+  for (const optionId of selectedOptionIds) {
+    const option = optionMap.get(optionId);
+    if (!option?.paletteConstraint) {
+      continue;
+    }
+    if (!paletteConstraintApplies(option.paletteConstraint, componentId)) {
+      continue;
+    }
+    if (option.paletteConstraint.mode === "restrict") {
+      restricted = true;
+      allowedPaletteIds = allowedPaletteIds.filter((id) => option.paletteConstraint!.paletteIds.includes(id));
+    } else {
+      option.paletteConstraint.paletteIds.forEach((id) => {
+        if (availablePaletteIds.includes(id)) {
+          preferred.add(id);
+        }
+      });
+    }
+  }
+
+  if (restricted && allowedPaletteIds.length === 0) {
+    allowedPaletteIds = [...availablePaletteIds];
+    restricted = false;
+  }
+
+  return {
+    allowedPaletteIds,
+    preferredPaletteIds: Array.from(preferred),
+    restricted,
+  };
+}
+
+export function getAllowedColorsForComponent(design: DesignInput, catalog: Catalog, componentId: string) {
+  const availability = getPaletteAvailabilityForComponent(design, catalog, componentId);
+  if (!availability.allowedPaletteIds.length) {
+    return catalog.colors;
+  }
+  const paletteSet = new Set(
+    catalog.colorPalettes
+      .filter((palette) => availability.allowedPaletteIds.includes(palette.id))
+      .flatMap((palette) => palette.colorIds)
+  );
+  const filtered = catalog.colors.filter((color) => paletteSet.has(color.id));
+  return filtered.length ? filtered : catalog.colors;
 }
 
 export function validateDesign(design: DesignInput, catalog: Catalog): ValidationResult {
@@ -153,7 +219,7 @@ export function validateDesign(design: DesignInput, catalog: Catalog): Validatio
     }
   }
 
-  const componentIssues = validateComponentSelections(design.componentSelections, pattern, catalog);
+  const componentIssues = validateComponentSelections(design, pattern, catalog);
   issues.push(...componentIssues);
 
   if (!pattern.positions.includes(design.position)) {
@@ -215,7 +281,7 @@ function applyDefaults(design: DesignInput, catalog: Catalog): DesignInput {
 }
 
 function validateComponentSelections(
-  selections: ComponentSelection[],
+  design: DesignInput,
   pattern: Catalog["patterns"][number],
   catalog: Catalog
 ): ValidationIssue[] {
@@ -226,7 +292,7 @@ function validateComponentSelections(
 
   const laceColors = new Set<string>();
 
-  for (const selection of selections) {
+  for (const selection of design.componentSelections) {
     if (!componentMap.has(selection.componentId)) {
       issues.push({
         severity: "error",
@@ -267,6 +333,25 @@ function validateComponentSelections(
     if (selection.componentId.startsWith("lace-")) {
       laceColors.add(selection.colorId);
     }
+
+    const availability = getPaletteAvailabilityForComponent(design, catalog, selection.componentId);
+    if (availability.allowedPaletteIds.length) {
+      const paletteSet = new Set(
+        catalog.colorPalettes
+          .filter((palette) => availability.allowedPaletteIds.includes(palette.id))
+          .flatMap((palette) => palette.colorIds)
+      );
+      if (paletteSet.size && !paletteSet.has(selection.colorId)) {
+        issues.push({
+          severity: availability.restricted ? "error" : "warning",
+          code: availability.restricted ? "palette_restricted" : "palette_preferred",
+          message: availability.restricted
+            ? "Selected color is outside the allowed palette for this option."
+            : "Selected color is outside the preferred palette for this option.",
+          path: `componentSelections.${selection.componentId}.colorId`,
+        });
+      }
+    }
   }
 
   if (!pattern.features.laceTwoTone && laceColors.size > 1) {
@@ -279,6 +364,13 @@ function validateComponentSelections(
   }
 
   return issues;
+}
+
+function paletteConstraintApplies(constraint: PaletteConstraint, componentId: string) {
+  if (constraint.scope === "components") {
+    return (constraint.componentIds ?? []).includes(componentId);
+  }
+  return true;
 }
 
 function validatePersonalization(design: DesignInput): ValidationIssue[] {
@@ -331,6 +423,25 @@ function validatePersonalization(design: DesignInput): ValidationIssue[] {
       message: "Number embroidery is selected but no jersey number was provided.",
       path: "personalization.number",
     });
+  }
+  const embroidery = personalization.embroidery ?? [];
+  for (const entry of embroidery) {
+    if (entry.enabled && !(entry.text ?? "").trim()) {
+      issues.push({
+        severity: "warning",
+        code: "personalization_embroidery_missing",
+        message: "Embroidery placement is enabled but no text was provided.",
+        path: "personalization.embroidery",
+      });
+    }
+    if (entry.enabled && (!entry.fontId || !entry.threadColorId)) {
+      issues.push({
+        severity: "warning",
+        code: "personalization_embroidery_incomplete",
+        message: "Embroidery placement needs a font and thread color.",
+        path: "personalization.embroidery",
+      });
+    }
   }
   return issues;
 }

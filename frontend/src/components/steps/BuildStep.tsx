@@ -5,7 +5,7 @@ interface BuildStepProps {
   design: CatalogDesign;
   catalog: SeedCatalog;
   availableOptions: Option[];
-  onUpdate: (path: string, value: string) => void;
+  onUpdate: (path: string, value: string | boolean) => void;
 }
 
 const buildGroups = [

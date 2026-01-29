@@ -1,0 +1,35 @@
+[
+  {
+    "id": "placement-handstall",
+    "name": "Handstall",
+    "description": "Inside palm or hand opening.",
+    "maxChars": 12,
+    "viewId": "front",
+    "x": 175,
+    "y": 150,
+    "scale": 1,
+    "familyIds": ["family-infield", "family-outfield", "family-fastpitch", "family-firstbase", "family-catcher"]
+  },
+  {
+    "id": "placement-outside-pinky",
+    "name": "Outside Pinky",
+    "description": "Pinky side exterior panel.",
+    "maxChars": 10,
+    "viewId": "front",
+    "x": 90,
+    "y": 135,
+    "scale": 1,
+    "familyIds": ["family-infield", "family-outfield", "family-fastpitch"]
+  },
+  {
+    "id": "placement-thumb",
+    "name": "Thumb",
+    "description": "Thumb panel exterior.",
+    "maxChars": 10,
+    "viewId": "front",
+    "x": 240,
+    "y": 120,
+    "scale": 1,
+    "familyIds": ["family-infield", "family-outfield", "family-fastpitch", "family-firstbase"]
+  }
+]

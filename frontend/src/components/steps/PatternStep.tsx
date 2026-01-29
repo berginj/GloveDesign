@@ -4,7 +4,7 @@ import { CatalogDesign, SeedCatalog } from "../../data/seedCatalog";
 interface PatternStepProps {
   design: CatalogDesign;
   catalog: SeedCatalog;
-  onUpdate: (path: string, value: string) => void;
+  onUpdate: (path: string, value: string | boolean) => void;
 }
 
 export function PatternStep({ design, catalog, onUpdate }: PatternStepProps) {

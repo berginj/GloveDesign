@@ -27,7 +27,7 @@ export async function startOrchestrationDirect(request: HttpRequest, context: In
   }
 
   const client = df.getClient(context) as any;
-  const instanceId = await client.startNew("jobOrchestrator", undefined, { jobId, teamUrl: normalizedUrl, mode });
+  const instanceId = await client.startNew("jobOrchestrator", jobId, { jobId, teamUrl: normalizedUrl, mode });
   context.log(`Direct orchestration started: ${instanceId}`);
   return { status: 202, jsonBody: { jobId, direct: true } };
 }

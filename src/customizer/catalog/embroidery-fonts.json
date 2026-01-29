@@ -1,0 +1,5 @@
+[
+  { "id": "font-block", "name": "Block", "cssFamily": "Impact, Arial Black, sans-serif", "weight": 700, "letterSpacing": 0.6 },
+  { "id": "font-script", "name": "Script", "cssFamily": "Brush Script MT, cursive", "weight": 400, "letterSpacing": 0.2 },
+  { "id": "font-modern", "name": "Modern", "cssFamily": "Trebuchet MS, sans-serif", "weight": 600, "letterSpacing": 0.4 }
+]

@@ -5,9 +5,14 @@ import patternFamilies from "../../../src/customizer/catalog/pattern-families.js
 import patterns from "../../../src/customizer/catalog/patterns.json";
 import components from "../../../src/customizer/catalog/components.json";
 import colors from "../../../src/customizer/catalog/colors.json";
+import colorPalettes from "../../../src/customizer/catalog/color-palettes.json";
 import materials from "../../../src/customizer/catalog/materials.json";
+import textures from "../../../src/customizer/catalog/textures.json";
 import optionGroups from "../../../src/customizer/catalog/option-groups.json";
 import options from "../../../src/customizer/catalog/options.json";
+import renderProfiles from "../../../src/customizer/catalog/render-profiles.json";
+import embroideryFonts from "../../../src/customizer/catalog/embroidery-fonts.json";
+import embroideryPlacements from "../../../src/customizer/catalog/embroidery-placements.json";
 import type { Catalog } from "./catalogTypes";
 
 export function loadSeedCatalogData(): Catalog {
@@ -19,8 +24,13 @@ export function loadSeedCatalogData(): Catalog {
     patterns,
     components,
     colors,
+    colorPalettes,
     materials,
+    textures,
     optionGroups,
     options,
+    renderProfiles,
+    embroideryFonts,
+    embroideryPlacements,
   };
 }

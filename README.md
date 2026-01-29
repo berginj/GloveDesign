@@ -326,3 +326,5 @@ npm test
   - Site may be blocked or require a login/captcha (this is expected; proposal-only still works).
 
 Note: This README is updated regularly during deployment troubleshooting.
+
+Last UI redeploy trigger: 2026-01-28

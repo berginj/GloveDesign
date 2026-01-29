@@ -16,6 +16,7 @@ export function DebugPanel() {
   const [functionKey, setFunctionKey] = useState(() => localStorage.getItem("debugFunctionKey") ?? "");
   const [log, setLog] = useState<RequestLogEntry[]>([]);
   const [message, setMessage] = useState<string | null>(null);
+  const [queueStatus, setQueueStatus] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     localStorage.setItem("debugFunctionKey", functionKey);
@@ -83,6 +84,28 @@ export function DebugPanel() {
 
   const clearLog = () => setLog([]);
 
+  const loadQueueStatus = async () => {
+    if (!API_BASE) {
+      setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
+      return;
+    }
+    setMessage(null);
+    const response = await fetch(`${API_BASE}/api/debug/queue`, { headers });
+    const body = await logResponse("GET /api/debug/queue", response);
+    if (response.ok) {
+      setQueueStatus(body as Record<string, unknown>);
+    }
+  };
+
+  const loadRecentJobs = async () => {
+    if (!API_BASE) {
+      setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
+      return;
+    }
+    setMessage(null);
+    await logResponse("GET /api/debug/jobs", await fetch(`${API_BASE}/api/debug/jobs?limit=25`, { headers }));
+  };
+
   return (
     <div className="debug-page">
       <div className="debug-header">
@@ -122,11 +145,23 @@ export function DebugPanel() {
             <button className="secondary" onClick={checkStatus}>
               Check Status
             </button>
+            <button className="secondary" onClick={loadQueueStatus}>
+              Queue Status
+            </button>
+            <button className="secondary" onClick={loadRecentJobs}>
+              Recent Jobs
+            </button>
             <button className="secondary" onClick={clearLog}>
               Clear Log
             </button>
           </div>
           {message && <div className="summary">{message}</div>}
+          {queueStatus && (
+            <div className="summary">
+              <strong>Queue</strong>
+              <pre>{JSON.stringify(queueStatus, null, 2)}</pre>
+            </div>
+          )}
         </div>
 
         <div className="panel debug-log">

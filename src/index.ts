@@ -12,6 +12,8 @@ import "./api/designs/updateDesign";
 import "./api/orders/index";
 import "./api/orders/getOrder";
 import "./api/validateDesign/index";
+import "./api/debug/jobs/index";
+import "./api/debug/queue/index";
 import "./orchestrator/index";
 import "./orchestrator/activities/index";
 import "./orchestrator/trigger";

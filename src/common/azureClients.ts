@@ -1,6 +1,6 @@
 import { DefaultAzureCredential } from "@azure/identity";
 import { BlobServiceClient } from "@azure/storage-blob";
-import { ServiceBusClient } from "@azure/service-bus";
+import { ServiceBusClient, ServiceBusAdministrationClient } from "@azure/service-bus";
 import { CosmosClient } from "@azure/cosmos";
 import { TableClient } from "@azure/data-tables";
 
@@ -23,6 +23,15 @@ export function createServiceBusClient(namespace: string) {
   const normalized = namespace.startsWith("https://") ? namespace.replace("https://", "") : namespace;
   const credential = new DefaultAzureCredential();
   return new ServiceBusClient(normalized, credential);
+}
+
+export function createServiceBusAdminClient(namespace: string) {
+  if (namespace.includes("Endpoint=sb://")) {
+    return new ServiceBusAdministrationClient(namespace);
+  }
+  const normalized = namespace.startsWith("https://") ? namespace.replace("https://", "") : namespace;
+  const credential = new DefaultAzureCredential();
+  return new ServiceBusAdministrationClient(normalized, credential);
 }
 
 export function createCosmosClient(endpoint: string) {

@@ -19,6 +19,7 @@ export interface JobStore {
     }
   ): Promise<void>;
   getJob(jobId: string): Promise<JobRecord | null>;
+  listRecent(limit: number): Promise<JobRecord[]>;
 }
 
 export class CosmosJobStore implements JobStore {
@@ -77,6 +78,15 @@ export class CosmosJobStore implements JobStore {
   async getJob(jobId: string): Promise<JobRecord | null> {
     const { resource } = await this.container.item(jobId, jobId).read<JobRecord>();
     return resource ?? null;
+  }
+
+  async listRecent(limit: number): Promise<JobRecord[]> {
+    const query = {
+      query: "SELECT * FROM c ORDER BY c.updatedAt DESC OFFSET 0 LIMIT @limit",
+      parameters: [{ name: "@limit", value: limit }],
+    };
+    const { resources } = await this.container.items.query<JobRecord>(query).fetchAll();
+    return resources ?? [];
   }
 }
 
@@ -151,6 +161,28 @@ export class TableJobStore implements JobStore {
     } catch (error) {
       return null;
     }
+  }
+
+  async listRecent(limit: number): Promise<JobRecord[]> {
+    const entities = this.table.listEntities<{ payload: string }>({
+      queryOptions: { filter: "PartitionKey eq 'job'" },
+    });
+    const results: JobRecord[] = [];
+    for await (const entity of entities) {
+      if (entity.payload) {
+        try {
+          results.push(JSON.parse(entity.payload));
+        } catch {
+          // ignore bad payload
+        }
+      }
+      if (results.length >= limit) {
+        break;
+      }
+    }
+    return results
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .slice(0, limit);
   }
 }
 

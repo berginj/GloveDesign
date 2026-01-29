@@ -13,7 +13,10 @@ interface RequestLogEntry {
 export function DebugPanel() {
   const [teamUrl, setTeamUrl] = useState(DEFAULT_TEAM_URL);
   const [jobId, setJobId] = useState("");
-  const [functionKey, setFunctionKey] = useState(() => localStorage.getItem("debugFunctionKey") ?? "");
+  const [functionKey, setFunctionKey] = useState(() => {
+    const stored = localStorage.getItem("debugFunctionKey");
+    return stored ?? import.meta.env.VITE_FUNCTION_KEY ?? "";
+  });
   const [log, setLog] = useState<RequestLogEntry[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [queueStatus, setQueueStatus] = useState<Record<string, unknown> | null>(null);

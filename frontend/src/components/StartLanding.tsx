@@ -381,6 +381,10 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
           materials, and colors once you launch.
         </div>
       </div>
+
+      <div className="build-info">
+        Build: {__BUILD_COMMIT__}
+      </div>
     </div>
   );
 }

@@ -614,3 +614,13 @@ textarea {
     align-items: flex-start;
   }
 }
+
+/* Build info */
+.build-info {
+  margin-top: 2rem;
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--border-light);
+  font-family: monospace;
+}

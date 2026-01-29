@@ -1,25 +1,38 @@
 import { PaletteColor, PaletteResult } from "../common/types";
 import { safeFetchBuffer, safeFetchText } from "../common/http";
+import { logWarn } from "../common/logging";
 
 const MAX_CSS_FILES = 4;
 let sharpModule: typeof import("sharp") | null | undefined;
+let sharpLoadAttempted = false;
 
-async function getSharp() {
+async function getSharp(jobId?: string) {
   if (sharpModule !== undefined) {
     return sharpModule;
   }
-  try {
-    const mod = await import("sharp");
-    sharpModule = mod.default ?? (mod as unknown as typeof import("sharp"));
-  } catch (error) {
-    sharpModule = null;
+  if (!sharpLoadAttempted) {
+    sharpLoadAttempted = true;
+    try {
+      const mod = await import("sharp");
+      sharpModule = mod.default ?? (mod as unknown as typeof import("sharp"));
+    } catch (error) {
+      sharpModule = null;
+      logWarn(
+        "sharp_load_failed",
+        { jobId, stage: "extract_colors" },
+        {
+          error: String(error),
+          message: "Sharp image library failed to load. Color extraction will rely only on CSS, which may result in lower quality palettes. Consider installing platform-specific sharp binaries for Azure Functions."
+        }
+      );
+    }
   }
   return sharpModule;
 }
 
-export async function extractPalette(logoUrl: string, cssUrls: string[], inlineStyles: string[] = []): Promise<PaletteResult> {
+export async function extractPalette(logoUrl: string, cssUrls: string[], inlineStyles: string[] = [], jobId?: string): Promise<PaletteResult> {
   const cssColors = await collectCssColors(cssUrls, inlineStyles);
-  const logoColors = await collectLogoColors(logoUrl);
+  const logoColors = await collectLogoColors(logoUrl, jobId);
   const combined = mergeColors([...cssColors, ...logoColors]).sort((a, b) => b.confidence - a.confidence);
   const [primary, secondary, accent, neutral] = rankPalette(combined);
   return {
@@ -74,9 +87,9 @@ async function collectCssColors(cssUrls: string[], inlineStyles: string[]): Prom
   return colors;
 }
 
-async function collectLogoColors(logoUrl: string): Promise<PaletteColor[]> {
+async function collectLogoColors(logoUrl: string, jobId?: string): Promise<PaletteColor[]> {
   try {
-    const sharp = await getSharp();
+    const sharp = await getSharp(jobId);
     if (!sharp) {
       return [];
     }

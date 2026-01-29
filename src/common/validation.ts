@@ -18,25 +18,58 @@ const BLOCKED_SUFFIXES = [".local", ".internal", ".localhost"];
 
 export function validateUrl(rawUrl: string): { ok: true; url: URL } | { ok: false; reason: string } {
   try {
+    // Check for empty or whitespace-only URLs
+    if (!rawUrl || !rawUrl.trim()) {
+      return { ok: false, reason: "URL is required." };
+    }
+
     const url = new URL(rawUrl);
+
+    // Protocol validation
     if (url.protocol !== "http:" && url.protocol !== "https:") {
       return { ok: false, reason: "Only http/https URLs are allowed." };
     }
+
+    // Credentials validation
     if (url.username || url.password) {
       return { ok: false, reason: "Credentials in URL are not allowed." };
     }
+
+    // Hostname validation
     const hostname = url.hostname;
+    if (!hostname || hostname.length === 0) {
+      return { ok: false, reason: "URL must include a hostname." };
+    }
+
+    // Check for suspicious patterns
+    if (hostname.includes("..") || hostname.startsWith(".") || hostname.endsWith(".")) {
+      return { ok: false, reason: "Invalid hostname format." };
+    }
+
+    // IP address validation
     if (isIP(hostname)) {
       if (isPrivateIp(hostname)) {
         return { ok: false, reason: "Private IP ranges are not allowed." };
       }
     }
+
+    // Blocked hostname check
     if (isBlockedHostname(hostname)) {
       return { ok: false, reason: "Blocked hostname." };
     }
+
+    // Port validation (block commonly abused ports)
+    if (url.port) {
+      const port = parseInt(url.port, 10);
+      const blockedPorts = [22, 23, 25, 3389, 5900, 5901]; // SSH, Telnet, SMTP, RDP, VNC
+      if (blockedPorts.includes(port)) {
+        return { ok: false, reason: "Port not allowed." };
+      }
+    }
+
     return { ok: true, url };
   } catch (error) {
-    return { ok: false, reason: "Invalid URL." };
+    return { ok: false, reason: "Invalid URL format." };
   }
 }
 
@@ -48,10 +81,25 @@ function isPrivateIp(ip: string): boolean {
 }
 
 export function ensureHttpScheme(url: string): string {
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
+  // Trim whitespace
+  const trimmed = url.trim();
+
+  // Already has protocol
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
   }
-  return `https://${url}`;
+
+  // Remove common protocol mistakes
+  let cleaned = trimmed;
+  if (cleaned.startsWith("//")) {
+    cleaned = cleaned.slice(2);
+  }
+  if (cleaned.startsWith("www.") === false && !cleaned.includes("/")) {
+    // If it's just a domain without path, ensure it's valid
+    cleaned = cleaned.toLowerCase();
+  }
+
+  return `https://${cleaned}`;
 }
 
 export async function validateUrlWithDns(rawUrl: string): Promise<{ ok: true; url: URL } | { ok: false; reason: string }> {

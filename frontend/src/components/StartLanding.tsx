@@ -14,10 +14,11 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
   const [teamUrl, setTeamUrl] = useState("");
   const [status, setStatus] = useState<"idle" | "running" | "done" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [palette, setPalette] = useState<PaletteResult | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
-  const [cached, setCached] = useState(false);
+  const [cached, setCached] = useState<boolean>(false);
   const [currentStage, setCurrentStage] = useState<string | null>(null);
 
   const swatches = useMemo(() => {
@@ -46,6 +47,7 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
     }
     setStatus("running");
     setMessage("Scanning branding… this can take a few minutes.");
+    setErrorDetails(null);
     setLogoUrl(null);
     setPalette(null);
     setJobId(null);
@@ -55,21 +57,34 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
       const job = await startBrandingJob(teamUrl.trim());
       setCached(Boolean(job.cached));
       setJobId(job.jobId);
+
+      // Wait a moment before first poll to give orchestrator time to start
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const start = Date.now();
       let result = await getJobStatus(job.jobId);
       setCurrentStage(result.stage);
       setMessage(`Scanning… stage: ${result.stage}`);
       while (result.status !== "Succeeded" && result.status !== "Failed" && Date.now() - start < 600000) {
         await new Promise((resolve) => setTimeout(resolve, 2500));
-        result = await getJobStatus(job.jobId);
-        if (result.stage && result.stage !== currentStage) {
-          setCurrentStage(result.stage);
-          setMessage(`Scanning… stage: ${result.stage}`);
+        try {
+          result = await getJobStatus(job.jobId);
+          if (result.stage && result.stage !== currentStage) {
+            setCurrentStage(result.stage);
+            setMessage(`Scanning… stage: ${result.stage}`);
+          }
+        } catch (pollError) {
+          // If polling fails (e.g., 404, 500), log but continue polling
+          console.warn("Job status poll failed:", pollError);
+          // Keep last known result and continue polling
         }
       }
       if (result.status !== "Succeeded") {
         setStatus("error");
         setMessage(result.error ?? "Branding job did not finish in time. You can keep checking.");
+        if (result.errorDetails) {
+          setErrorDetails(result.errorDetails);
+        }
         return;
       }
       const logo = result.outputs?.logo?.url ?? null;
@@ -105,17 +120,27 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
       const start = Date.now();
       let result = await getJobStatus(jobId);
       setCurrentStage(result.stage);
+      setMessage(`Scanning… stage: ${result.stage}`);
       while (result.status !== "Succeeded" && result.status !== "Failed" && Date.now() - start < 600000) {
         await new Promise((resolve) => setTimeout(resolve, 2500));
-        result = await getJobStatus(jobId);
-        if (result.stage && result.stage !== currentStage) {
-          setCurrentStage(result.stage);
-          setMessage(`Scanning… stage: ${result.stage}`);
+        try {
+          result = await getJobStatus(jobId);
+          if (result.stage && result.stage !== currentStage) {
+            setCurrentStage(result.stage);
+            setMessage(`Scanning… stage: ${result.stage}`);
+          }
+        } catch (pollError) {
+          // If polling fails (e.g., 404, 500), log but continue polling
+          console.warn("Job status poll failed:", pollError);
+          // Keep last known result and continue polling
         }
       }
       if (result.status !== "Succeeded") {
         setStatus("error");
         setMessage(result.error ?? "Branding job is still running. Try again in a bit.");
+        if (result.errorDetails) {
+          setErrorDetails(result.errorDetails);
+        }
         return;
       }
       const logo = result.outputs?.logo?.url ?? null;
@@ -264,6 +289,12 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
           {!canScan && <div className="summary">Set VITE_API_BASE to enable team branding scans.</div>}
           {message && <div className="summary">{message}</div>}
           {status === "running" && currentStage && <div className="summary">Stage: {currentStage}</div>}
+          {errorDetails && status === "error" && (
+            <details className="error-details">
+              <summary>Show error details</summary>
+              <pre>{errorDetails}</pre>
+            </details>
+          )}
           {status === "error" && (
             <div className="cta">
               <button className="secondary" onClick={continuePolling}>

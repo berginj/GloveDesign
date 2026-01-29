@@ -14,7 +14,7 @@ export default async function writeOutputsActivity(input: {
   const blobUrl = process.env.BLOB_URL || process.env.BLOB_CONNECTION_STRING;
   const containerName = process.env.BLOB_CONTAINER || "glovejobs";
   if (!blobUrl) {
-    return {};
+    throw new Error("Blob storage not configured. Set BLOB_URL or BLOB_CONNECTION_STRING environment variable.");
   }
   const client = createBlobClient(blobUrl);
   const jobPath = `jobs/${input.jobId}`;

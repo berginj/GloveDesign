@@ -22,18 +22,28 @@ function buildPlaceholderSvg(sourceUrl: string) {
 }
 
 export default async function selectLogoActivity(input: { jobId: string; crawlReport: CrawlReport }): Promise<LogoScore | null> {
+  const blobUrl = process.env.BLOB_URL || process.env.BLOB_CONNECTION_STRING;
+  const containerName = process.env.BLOB_CONTAINER || "glovejobs";
+  if (!blobUrl) {
+    throw new Error("Blob storage not configured. Set BLOB_URL or BLOB_CONNECTION_STRING environment variable.");
+  }
+
+  // Defensive checks
+  if (!input.crawlReport || typeof input.crawlReport !== "object") {
+    throw new Error("Invalid crawl report provided to selectLogo activity");
+  }
+
+  if (!Array.isArray(input.crawlReport.imageCandidates)) {
+    throw new Error("Crawl report must include imageCandidates array");
+  }
+
   const scored = scoreLogoCandidates(input.crawlReport.imageCandidates).sort((a, b) => b.score - a.score);
   if (scored.length === 0) {
-    const blobUrl = process.env.BLOB_URL || process.env.BLOB_CONNECTION_STRING;
-    const containerName = process.env.BLOB_CONTAINER || "glovejobs";
     const fallback: LogoScore = {
       url: input.crawlReport.startUrl,
       score: 0.05,
       reasons: ["fallback: no logo candidates"],
     };
-    if (!blobUrl) {
-      return fallback;
-    }
     const client = createBlobClient(blobUrl);
     const svg = buildPlaceholderSvg(input.crawlReport.startUrl);
     const result = await writeBlob(
@@ -61,13 +71,7 @@ export default async function selectLogoActivity(input: { jobId: string; crawlRe
 
   const selection = (analyzed.length > 0 ? analyzed : scored).sort((a, b) => b.score - a.score)[0];
   if (!selection) {
-    return null;
-  }
-
-  const blobUrl = process.env.BLOB_URL || process.env.BLOB_CONNECTION_STRING;
-  const containerName = process.env.BLOB_CONTAINER || "glovejobs";
-  if (!blobUrl) {
-    return selection;
+    throw new Error("No logo candidates found after scoring and analysis.");
   }
   const extension = selection.url.split(".").pop() || "png";
   const response = await safeFetchBuffer(selection.url, { timeoutMs: 15000, maxBytes: 4 * 1024 * 1024 });

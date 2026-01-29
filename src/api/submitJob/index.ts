@@ -21,6 +21,14 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
     return { status: 400, jsonBody: { error: validation.reason } };
   }
 
+  const store = createJobStoreFromEnv();
+  if (!store) {
+    context.error("Job store not configured. Set COSMOS_ENDPOINT or TABLE_CONNECTION_STRING.");
+    return { status: 500, jsonBody: { error: "Job store not configured. Please check server configuration." } };
+  }
+
+  await store.init();
+
   const jobId = uuidv4();
   const job: JobRecord = {
     jobId,
@@ -31,39 +39,42 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
     updatedAt: new Date().toISOString(),
   };
 
-  const store = createJobStoreFromEnv();
-  if (store) {
-    await store.init();
-    const ttlHours = parseInt(process.env.BRANDING_CACHE_TTL_HOURS ?? "24", 10);
-    const cacheTtl = Number.isFinite(ttlHours) ? ttlHours : 24;
-    const cached = await store.getLatestCompletedJobByTeamUrl(normalizedUrl);
-    if (cached?.outputs && cached.stage === "completed") {
-      const ageMs = Date.now() - Date.parse(cached.updatedAt);
-      if (ageMs >= 0 && ageMs <= cacheTtl * 60 * 60 * 1000) {
-        context.log(`Reusing cached job ${cached.jobId} for ${normalizedUrl}.`);
-        return { status: 200, jsonBody: { jobId: cached.jobId, cached: true } };
-      }
+  const ttlHours = parseInt(process.env.BRANDING_CACHE_TTL_HOURS ?? "24", 10);
+  const cacheTtl = Number.isFinite(ttlHours) ? ttlHours : 24;
+  const cached = await store.getLatestCompletedJobByTeamUrl(normalizedUrl);
+  if (cached?.outputs && cached.stage === "completed") {
+    const ageMs = Date.now() - Date.parse(cached.updatedAt);
+    if (ageMs >= 0 && ageMs <= cacheTtl * 60 * 60 * 1000) {
+      context.log(`Reusing cached job ${cached.jobId} for ${normalizedUrl}.`);
+      return { status: 200, jsonBody: { jobId: cached.jobId, cached: true } };
     }
-    await store.upsertJob(job);
   }
 
-  const serviceBusNamespace = process.env.SERVICEBUS_NAMESPACE || process.env.SERVICEBUS_CONNECTION;
+  await store.upsertJob(job);
+
+  const serviceBusConnection = process.env.SERVICEBUS_CONNECTION;
   const queueName = process.env.SERVICEBUS_QUEUE || "glovejobs";
-  if (!serviceBusNamespace) {
-    return { status: 500, jsonBody: { error: "Service Bus namespace not configured." } };
+  if (!serviceBusConnection) {
+    context.error("Service Bus not configured. Set SERVICEBUS_CONNECTION environment variable.");
+    return { status: 500, jsonBody: { error: "Service Bus not configured. Please check server configuration." } };
   }
 
-  const sbClient = createServiceBusClient(serviceBusNamespace);
-  const sender = sbClient.createSender(queueName);
-  await sender.sendMessages({
-    body: { jobId, teamUrl: normalizedUrl, mode: body.mode },
-    contentType: "application/json",
-  });
-  await sender.close();
-  await sbClient.close();
+  try {
+    const sbClient = createServiceBusClient(serviceBusConnection);
+    const sender = sbClient.createSender(queueName);
+    await sender.sendMessages({
+      body: { jobId, teamUrl: normalizedUrl, mode: body.mode },
+      contentType: "application/json",
+    });
+    await sender.close();
+    await sbClient.close();
 
-  context.log(`Job ${jobId} enqueued.`);
-  return { status: 202, jsonBody: { jobId } };
+    context.log(`Job ${jobId} enqueued to Service Bus queue '${queueName}'.`);
+    return { status: 202, jsonBody: { jobId } };
+  } catch (error) {
+    context.error(`Failed to enqueue job ${jobId}: ${String(error)}`);
+    return { status: 500, jsonBody: { error: "Failed to enqueue branding job. Please try again." } };
+  }
 }
 
 app.http("submitJob", {

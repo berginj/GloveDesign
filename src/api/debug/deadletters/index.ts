@@ -1,5 +1,4 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { SubQueue } from "@azure/service-bus";
 import { createServiceBusClient } from "../../../common/azureClients";
 
 export async function peekDeadLetters(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
@@ -11,7 +10,7 @@ export async function peekDeadLetters(request: HttpRequest, context: InvocationC
   }
   try {
     const client = createServiceBusClient(serviceBusNamespace);
-    const receiver = client.createReceiver(queueName, { subQueueType: SubQueue.DeadLetter });
+    const receiver = client.createReceiver(queueName, { subQueueType: "deadLetter" });
     const messages = await receiver.peekMessages(maxCount);
     await receiver.close();
     await client.close();

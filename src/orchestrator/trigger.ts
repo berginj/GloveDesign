@@ -6,9 +6,17 @@ app.serviceBusQueue("jobQueueTrigger", {
   queueName: "%SERVICEBUS_QUEUE%",
   extraInputs: [df.input.durableClient()],
   handler: async (message: any, context: InvocationContext) => {
-    const client = df.getClient(context) as any;
-    const payload = message?.body ?? message;
-    const instanceId = await client.startNew("jobOrchestrator", undefined, payload);
-    context.log(`Started orchestration with ID = '${instanceId}'.`);
+    try {
+      const client = df.getClient(context) as any;
+      const payload = message?.body ?? message;
+      if (!payload?.jobId) {
+        throw new Error("jobQueueTrigger missing jobId in message body.");
+      }
+      const instanceId = await client.startNew("jobOrchestrator", undefined, payload);
+      context.log(`Started orchestration with ID = '${instanceId}'.`);
+    } catch (error) {
+      context.error(`jobQueueTrigger failed: ${String(error)}`);
+      throw error;
+    }
   },
 });

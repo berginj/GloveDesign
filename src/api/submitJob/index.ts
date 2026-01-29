@@ -34,6 +34,16 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
   const store = createJobStoreFromEnv();
   if (store) {
     await store.init();
+    const ttlHours = parseInt(process.env.BRANDING_CACHE_TTL_HOURS ?? "24", 10);
+    const cacheTtl = Number.isFinite(ttlHours) ? ttlHours : 24;
+    const cached = await store.getLatestCompletedJobByTeamUrl(normalizedUrl);
+    if (cached?.outputs && cached.stage === "completed") {
+      const ageMs = Date.now() - Date.parse(cached.updatedAt);
+      if (ageMs >= 0 && ageMs <= cacheTtl * 60 * 60 * 1000) {
+        context.log(`Reusing cached job ${cached.jobId} for ${normalizedUrl}.`);
+        return { status: 200, jsonBody: { jobId: cached.jobId, cached: true } };
+      }
+    }
     await store.upsertJob(job);
   }
 

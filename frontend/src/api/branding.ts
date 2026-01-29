@@ -1,5 +1,6 @@
 export interface BrandingJobResponse {
   jobId: string;
+  cached?: boolean;
 }
 
 export interface JobStatusResponse {

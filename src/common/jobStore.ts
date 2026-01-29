@@ -20,6 +20,7 @@ export interface JobStore {
   ): Promise<void>;
   getJob(jobId: string): Promise<JobRecord | null>;
   listRecent(limit: number): Promise<JobRecord[]>;
+  getLatestCompletedJobByTeamUrl(teamUrl: string): Promise<JobRecord | null>;
 }
 
 export class CosmosJobStore implements JobStore {
@@ -88,6 +89,15 @@ export class CosmosJobStore implements JobStore {
     const { resources } = await this.container.items.query<JobRecord>(query).fetchAll();
     return resources ?? [];
   }
+
+  async getLatestCompletedJobByTeamUrl(teamUrl: string): Promise<JobRecord | null> {
+    const query = {
+      query: "SELECT * FROM c WHERE c.teamUrl = @teamUrl AND c.stage = 'completed' ORDER BY c.updatedAt DESC OFFSET 0 LIMIT 1",
+      parameters: [{ name: "@teamUrl", value: teamUrl }],
+    };
+    const { resources } = await this.container.items.query<JobRecord>(query).fetchAll();
+    return resources?.[0] ?? null;
+  }
 }
 
 export class TableJobStore implements JobStore {
@@ -109,6 +119,8 @@ export class TableJobStore implements JobStore {
     await this.table.upsertEntity({
       partitionKey: "job",
       rowKey: job.jobId,
+      teamUrl: job.teamUrl,
+      mode: job.mode,
       stage: job.stage,
       createdAt: job.createdAt,
       updatedAt: job.updatedAt,
@@ -147,6 +159,8 @@ export class TableJobStore implements JobStore {
     await this.table.upsertEntity({
       partitionKey: "job",
       rowKey: jobId,
+      teamUrl: updated.teamUrl,
+      mode: updated.mode,
       stage: updated.stage,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
@@ -183,6 +197,28 @@ export class TableJobStore implements JobStore {
     return results
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
       .slice(0, limit);
+  }
+
+  async getLatestCompletedJobByTeamUrl(teamUrl: string): Promise<JobRecord | null> {
+    const escaped = teamUrl.replace(/'/g, "''");
+    const entities = this.table.listEntities<{ payload: string }>({
+      queryOptions: { filter: `PartitionKey eq 'job' and teamUrl eq '${escaped}' and stage eq 'completed'` },
+    });
+    let latest: JobRecord | null = null;
+    for await (const entity of entities) {
+      if (!entity.payload) {
+        continue;
+      }
+      try {
+        const job = JSON.parse(entity.payload) as JobRecord;
+        if (!latest || job.updatedAt > latest.updatedAt) {
+          latest = job;
+        }
+      } catch {
+        // ignore bad payload
+      }
+    }
+    return latest;
   }
 }
 

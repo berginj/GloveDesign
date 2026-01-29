@@ -17,6 +17,7 @@ export function DebugPanel() {
   const [log, setLog] = useState<RequestLogEntry[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [queueStatus, setQueueStatus] = useState<Record<string, unknown> | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   useEffect(() => {
     localStorage.setItem("debugFunctionKey", functionKey);
@@ -49,19 +50,36 @@ export function DebugPanel() {
     return body;
   };
 
+  const runRequest = async (label: string, input: RequestInfo, init?: RequestInit) => {
+    try {
+      const response = await fetch(input, init);
+      setLastError(null);
+      return await logResponse(label, response);
+    } catch (error) {
+      const entry: RequestLogEntry = {
+        label,
+        status: 0,
+        body: { error: (error as Error).message ?? String(error) },
+        at: new Date().toLocaleTimeString(),
+      };
+      setLog((prev) => [entry, ...prev]);
+      setLastError((error as Error).message ?? "Network error");
+      return null;
+    }
+  };
+
   const startJob = async () => {
     if (!API_BASE) {
       setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
       return;
     }
     setMessage(null);
-    const response = await fetch(`${API_BASE}/api/jobs`, {
+    const body = await runRequest("POST /api/jobs", `${API_BASE}/api/jobs`, {
       method: "POST",
       headers,
       body: JSON.stringify({ teamUrl, mode: "proposal" }),
     });
-    const body = await logResponse("POST /api/jobs", response);
-    if (response.ok && (body as { jobId?: string })?.jobId) {
+    if ((body as { jobId?: string })?.jobId) {
       setJobId((body as { jobId: string }).jobId);
     }
   };
@@ -76,10 +94,7 @@ export function DebugPanel() {
       return;
     }
     setMessage(null);
-    const response = await fetch(`${API_BASE}/api/jobs/${jobId}`, {
-      headers,
-    });
-    await logResponse("GET /api/jobs/:id", response);
+    await runRequest("GET /api/jobs/:id", `${API_BASE}/api/jobs/${jobId}`, { headers });
   };
 
   const clearLog = () => setLog([]);
@@ -90,9 +105,8 @@ export function DebugPanel() {
       return;
     }
     setMessage(null);
-    const response = await fetch(`${API_BASE}/api/debug/queue`, { headers });
-    const body = await logResponse("GET /api/debug/queue", response);
-    if (response.ok) {
+    const body = await runRequest("GET /api/debug/queue", `${API_BASE}/api/debug/queue`, { headers });
+    if (body) {
       setQueueStatus(body as Record<string, unknown>);
     }
   };
@@ -103,7 +117,16 @@ export function DebugPanel() {
       return;
     }
     setMessage(null);
-    await logResponse("GET /api/debug/jobs", await fetch(`${API_BASE}/api/debug/jobs?limit=25`, { headers }));
+    await runRequest("GET /api/debug/jobs", `${API_BASE}/api/debug/jobs?limit=25`, { headers });
+  };
+
+  const pingApi = async () => {
+    if (!API_BASE) {
+      setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
+      return;
+    }
+    setMessage(null);
+    await runRequest("GET /api/catalog/brands", `${API_BASE}/api/catalog/brands`, { headers });
   };
 
   return (
@@ -122,6 +145,11 @@ export function DebugPanel() {
       <div className="debug-grid">
         <div className="panel">
           <h3>Request Controls</h3>
+          <div className="summary">
+            <strong>API Base</strong>: {API_BASE || "Not set"}
+            <br />
+            <strong>Function Key</strong>: {functionKey ? "Set" : "Missing"}
+          </div>
           <div className="field-grid">
             <div>
               <label>Team Website</label>
@@ -145,6 +173,9 @@ export function DebugPanel() {
             <button className="secondary" onClick={checkStatus}>
               Check Status
             </button>
+            <button className="secondary" onClick={pingApi}>
+              Ping API
+            </button>
             <button className="secondary" onClick={loadQueueStatus}>
               Queue Status
             </button>
@@ -156,6 +187,7 @@ export function DebugPanel() {
             </button>
           </div>
           {message && <div className="summary">{message}</div>}
+          {lastError && <div className="summary">Last error: {lastError}</div>}
           {queueStatus && (
             <div className="summary">
               <strong>Queue</strong>

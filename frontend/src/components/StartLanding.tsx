@@ -217,6 +217,9 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
               </button>
             </div>
           )}
+          <div className="debug-link">
+            <a href="#debug">Open debug console</a>
+          </div>
           {(logoUrl || swatches.length > 0) && (
             <div className="brand-result">
               {logoUrl && (

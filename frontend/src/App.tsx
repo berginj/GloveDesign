@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StartLanding } from "./components/StartLanding";
 import { WizardStep, WizardStepId } from "./components/WizardStep";
 import { GlovePreview } from "./components/GlovePreview";
 import { DesignSummary } from "./components/DesignSummary";
+import { DebugPanel } from "./components/DebugPanel";
 import { loadSeedCatalog } from "./data/seedCatalog";
 import { buildDesignContext, getAvailableOptions } from "./engine/optionEngine";
 import { applyPaletteToDesign, buildInitialDesign, updateDesignField } from "./state/designState";
@@ -15,6 +16,7 @@ export function App() {
   const [activeStep, setActiveStep] = useState<WizardStepId>("start");
   const [design, setDesign] = useState(() => buildInitialDesign(catalog));
   const [started, setStarted] = useState(false);
+  const [isDebug, setIsDebug] = useState(() => window.location.hash === "#debug");
   const [branding, setBranding] = useState<{ logoUrl: string | null; palette: PaletteResult | null }>({
     logoUrl: null,
     palette: null,
@@ -31,6 +33,20 @@ export function App() {
       return catalog.options;
     }
   }, [catalog, design]);
+
+  useEffect(() => {
+    const handler = () => setIsDebug(window.location.hash === "#debug");
+    window.addEventListener("hashchange", handler);
+    return () => window.removeEventListener("hashchange", handler);
+  }, []);
+
+  if (isDebug) {
+    return (
+      <div className="app debug">
+        <DebugPanel />
+      </div>
+    );
+  }
 
   return (
     <div className="app">

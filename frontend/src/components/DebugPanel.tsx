@@ -138,6 +138,22 @@ export function DebugPanel() {
     }
   };
 
+  const startDirect = async () => {
+    if (!API_BASE) {
+      setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
+      return;
+    }
+    setMessage(null);
+    const body = await runRequest("POST /api/debug/start", `${API_BASE}/api/debug/start`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ teamUrl, mode: "proposal" }),
+    });
+    if ((body as { jobId?: string })?.jobId) {
+      setJobId((body as { jobId: string }).jobId);
+    }
+  };
+
   const pingApi = async () => {
     if (!API_BASE) {
       setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
@@ -188,6 +204,9 @@ export function DebugPanel() {
           </div>
           <div className="cta">
             <button onClick={startJob}>Start Job</button>
+            <button className="secondary" onClick={startDirect}>
+              Start Direct
+            </button>
             <button className="secondary" onClick={checkStatus}>
               Check Status
             </button>

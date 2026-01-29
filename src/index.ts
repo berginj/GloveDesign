@@ -15,6 +15,7 @@ import "./api/validateDesign/index";
 import "./api/debug/jobs/index";
 import "./api/debug/queue/index";
 import "./api/debug/deadletters/index";
+import "./api/debug/start/index";
 import "./orchestrator/index";
 import "./orchestrator/activities/index";
 import "./orchestrator/trigger";

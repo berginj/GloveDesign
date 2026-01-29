@@ -5,10 +5,47 @@ import { applyLogoAnalysis, scoreLogoCandidates } from "../../logo/scoring";
 import { analyzeImage } from "../../logo/analyze";
 import { safeFetchBuffer } from "../../common/http";
 
+function buildPlaceholderSvg(sourceUrl: string) {
+  let label = "Team";
+  try {
+    const hostname = new URL(sourceUrl).hostname.replace(/^www\./, "");
+    label = hostname.split(".")[0]?.slice(0, 12) || label;
+  } catch {
+    // ignore
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="520" height="240" viewBox="0 0 520 240">
+  <rect width="520" height="240" fill="#f6efe5"/>
+  <rect x="20" y="20" width="480" height="200" rx="24" fill="#1f4b5a"/>
+  <text x="50%" y="52%" text-anchor="middle" font-family="Space Grotesk, Arial, sans-serif" font-size="48" fill="#fef6eb">${label}</text>
+  <text x="50%" y="70%" text-anchor="middle" font-family="Space Grotesk, Arial, sans-serif" font-size="16" fill="#f6d7b1">Placeholder logo</text>
+</svg>`;
+}
+
 export default async function selectLogoActivity(input: { jobId: string; crawlReport: CrawlReport }): Promise<LogoScore | null> {
   const scored = scoreLogoCandidates(input.crawlReport.imageCandidates).sort((a, b) => b.score - a.score);
   if (scored.length === 0) {
-    return null;
+    const blobUrl = process.env.BLOB_URL || process.env.BLOB_CONNECTION_STRING;
+    const containerName = process.env.BLOB_CONTAINER || "glovejobs";
+    const fallback: LogoScore = {
+      url: input.crawlReport.startUrl,
+      score: 0.05,
+      reasons: ["fallback: no logo candidates"],
+    };
+    if (!blobUrl) {
+      return fallback;
+    }
+    const client = createBlobClient(blobUrl);
+    const svg = buildPlaceholderSvg(input.crawlReport.startUrl);
+    const result = await writeBlob(
+      client,
+      containerName,
+      `jobs/${input.jobId}/logo.svg`,
+      svg,
+      "image/svg+xml",
+      input.jobId,
+      "logo_fallback"
+    );
+    return { ...fallback, blobPath: result.path, reasons: [...fallback.reasons, `Placeholder at ${result.path}`] };
   }
 
   const analyzed: LogoScore[] = [];

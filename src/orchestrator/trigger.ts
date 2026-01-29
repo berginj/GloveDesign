@@ -1,22 +1,87 @@
 import { app, InvocationContext } from "@azure/functions";
 import * as df from "durable-functions";
+import { logError, logInfo } from "../common/logging";
 
 app.serviceBusQueue("jobQueueTrigger", {
   connection: "SERVICEBUS_CONNECTION",
   queueName: "%SERVICEBUS_QUEUE%",
   extraInputs: [df.input.durableClient()],
   handler: async (message: any, context: InvocationContext) => {
+    const startTime = Date.now();
+    let jobId = "unknown";
+
     try {
-      const client = df.getClient(context) as any;
+      // Log raw message for debugging
+      context.log(`[jobQueueTrigger] Received message. Type: ${typeof message}, HasBody: ${Boolean(message?.body)}`);
+
+      // Parse payload
       const payload = normalizePayload(message?.body ?? message, context);
       if (!payload?.jobId) {
-        throw new Error("jobQueueTrigger missing jobId in message body.");
+        const errorMsg = "jobQueueTrigger missing jobId in message body.";
+        context.error(`[jobQueueTrigger] ${errorMsg}. Payload: ${JSON.stringify(payload)}`);
+        logError("trigger_missing_jobid", {}, { payload, messageType: typeof message });
+        throw new Error(errorMsg);
       }
-      context.log(`jobQueueTrigger received job ${payload.jobId} (${payload.teamUrl ?? "no url"}).`);
-      const instanceId = await client.startNew("jobOrchestrator", payload.jobId, payload);
-      context.log(`Started orchestration with ID = '${instanceId}'.`);
+
+      jobId = payload.jobId;
+      logInfo("trigger_received", { jobId, stage: "trigger" }, { teamUrl: payload.teamUrl, mode: payload.mode });
+
+      // Validate Durable Functions client
+      let client: any;
+      try {
+        client = df.getClient(context);
+        if (!client) {
+          throw new Error("Durable Functions client is null. Check AzureWebJobsStorage configuration.");
+        }
+        context.log(`[jobQueueTrigger] Durable Functions client obtained for job ${jobId}`);
+      } catch (clientError) {
+        const errorMsg = `Failed to get Durable Functions client: ${String(clientError)}`;
+        context.error(`[jobQueueTrigger] ${errorMsg}`);
+        logError("trigger_client_error", { jobId, stage: "trigger" }, {
+          error: String(clientError),
+          errorStack: (clientError as Error).stack,
+          storageConfigured: Boolean(process.env.AzureWebJobsStorage),
+          storageEnvVar: process.env.AzureWebJobsStorage ? "SET" : "NOT_SET"
+        });
+        throw new Error(errorMsg);
+      }
+
+      // Start orchestration
+      context.log(`[jobQueueTrigger] Starting orchestration for job ${jobId}...`);
+      let instanceId: string;
+      try {
+        instanceId = await client.startNew("jobOrchestrator", jobId, payload);
+      } catch (startError) {
+        const errorMsg = `Failed to start orchestration: ${String(startError)}`;
+        context.error(`[jobQueueTrigger] ${errorMsg}`);
+        logError("trigger_start_error", { jobId, stage: "trigger" }, {
+          error: String(startError),
+          errorStack: (startError as Error).stack,
+          errorName: (startError as Error).name,
+          payload
+        });
+        throw new Error(errorMsg);
+      }
+
+      const duration = Date.now() - startTime;
+      context.log(`[jobQueueTrigger] Successfully started orchestration with ID = '${instanceId}' for job ${jobId}. Duration: ${duration}ms`);
+      logInfo("trigger_success", { jobId, stage: "trigger" }, { instanceId, duration, teamUrl: payload.teamUrl });
+
     } catch (error) {
-      context.error(`jobQueueTrigger failed: ${String(error)}`);
+      const duration = Date.now() - startTime;
+      const errorDetails = {
+        error: String(error),
+        errorType: (error as Error).name,
+        errorStack: (error as Error).stack,
+        duration,
+        messageType: typeof message,
+        hasBody: Boolean(message?.body)
+      };
+
+      context.error(`[jobQueueTrigger] FAILED for job ${jobId}. Duration: ${duration}ms. Error: ${String(error)}`);
+      logError("trigger_fatal_error", { jobId, stage: "trigger" }, errorDetails);
+
+      // Re-throw to trigger retry or dead-letter
       throw error;
     }
   },

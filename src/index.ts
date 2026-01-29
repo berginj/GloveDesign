@@ -1,3 +1,7 @@
+// Run startup diagnostics before loading anything else
+import { runStartupDiagnostics } from "./startup/diagnostics";
+runStartupDiagnostics();
+
 import "./api/submitJob/index";
 import "./api/getJob/index";
 import "./api/catalog/brands/index";

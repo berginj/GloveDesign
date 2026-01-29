@@ -1,6 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import { createJobStoreFromEnv } from "../../common/jobStore";
 import { createServiceBusClient, createBlobClient } from "../../common/azureClients";
+import * as df from "durable-functions";
 
 interface ConfigCheck {
   name: string;
@@ -12,6 +13,72 @@ interface ConfigCheck {
 export async function healthCheck(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   const checks: ConfigCheck[] = [];
   let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
+
+  // Check AzureWebJobsStorage (CRITICAL for Durable Functions)
+  try {
+    const storageConnectionString = process.env.AzureWebJobsStorage || process.env.AZUREWEBJOBSSTORAGE;
+    if (!storageConnectionString) {
+      checks.push({
+        name: "Durable Functions Storage",
+        status: "error",
+        message: "AzureWebJobsStorage not configured - Durable Functions CANNOT run",
+        details: "Set AzureWebJobsStorage environment variable. For local dev: 'UseDevelopmentStorage=true' (requires Azurite). For Azure: automatically set by platform.",
+      });
+      overallStatus = "unhealthy";
+    } else if (storageConnectionString === "UseDevelopmentStorage=true") {
+      // Try to validate Azurite is running
+      checks.push({
+        name: "Durable Functions Storage",
+        status: "ok",
+        message: "Using local development storage (Azurite)",
+        details: "Ensure Azurite is running: azurite --silent --location ./azurite",
+      });
+    } else {
+      checks.push({
+        name: "Durable Functions Storage",
+        status: "ok",
+        message: "AzureWebJobsStorage configured",
+        details: "Using Azure Storage Account",
+      });
+    }
+  } catch (error) {
+    checks.push({
+      name: "Durable Functions Storage",
+      status: "error",
+      message: "Storage validation failed",
+      details: String(error),
+    });
+    overallStatus = "unhealthy";
+  }
+
+  // Check Durable Functions Client
+  try {
+    const client = df.getClient(context);
+    if (client) {
+      checks.push({
+        name: "Durable Functions Client",
+        status: "ok",
+        message: "Durable Functions client initialized successfully",
+        details: "Orchestrations can be started",
+      });
+    } else {
+      checks.push({
+        name: "Durable Functions Client",
+        status: "error",
+        message: "Durable Functions client is null",
+        details: "Check AzureWebJobsStorage configuration and restart function app",
+      });
+      overallStatus = "unhealthy";
+    }
+  } catch (error) {
+    checks.push({
+      name: "Durable Functions Client",
+      status: "error",
+      message: "Failed to initialize Durable Functions client",
+      details: `${String(error)}. This usually means AzureWebJobsStorage is not configured or storage is unreachable.`,
+    });
+    overallStatus = "unhealthy";
+  }
 
   // Check Job Store
   try {
@@ -153,5 +220,6 @@ app.http("health", {
   methods: ["GET"],
   authLevel: "anonymous",
   route: "health",
+  extraInputs: [df.input.durableClient()],
   handler: healthCheck,
 });

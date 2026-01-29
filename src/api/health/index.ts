@@ -112,7 +112,7 @@ export async function healthCheck(request: HttpRequest, context: InvocationConte
 
   // Check Service Bus
   try {
-    const serviceBusConnection = process.env.SERVICEBUS_CONNECTION;
+    const serviceBusConnection = process.env.SERVICEBUS_CONNECTION || process.env.SERVICEBUS_NAMESPACE;
     if (serviceBusConnection) {
       // Just check if we can create a client (don't actually send messages in health check)
       const client = createServiceBusClient(serviceBusConnection);
@@ -128,7 +128,7 @@ export async function healthCheck(request: HttpRequest, context: InvocationConte
         name: "Service Bus",
         status: "error",
         message: "Service Bus not configured",
-        details: "Set SERVICEBUS_CONNECTION environment variable",
+        details: "Set SERVICEBUS_CONNECTION or SERVICEBUS_NAMESPACE environment variable",
       });
       overallStatus = "unhealthy";
     }

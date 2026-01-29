@@ -52,10 +52,10 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
 
   await store.upsertJob(job);
 
-  const serviceBusConnection = process.env.SERVICEBUS_CONNECTION;
+  const serviceBusConnection = process.env.SERVICEBUS_CONNECTION || process.env.SERVICEBUS_NAMESPACE;
   const queueName = process.env.SERVICEBUS_QUEUE || "glovejobs";
   if (!serviceBusConnection) {
-    context.error("Service Bus not configured. Set SERVICEBUS_CONNECTION environment variable.");
+    context.error("Service Bus not configured. Set SERVICEBUS_CONNECTION or SERVICEBUS_NAMESPACE environment variable.");
     return { status: 500, jsonBody: { error: "Service Bus not configured. Please check server configuration." } };
   }
 

@@ -61,13 +61,13 @@ export function runStartupDiagnostics(): void {
   }
 
   // Check 3: Service Bus Configuration
-  const serviceBusConnection = process.env.SERVICEBUS_CONNECTION;
+  const serviceBusConnection = process.env.SERVICEBUS_CONNECTION || process.env.SERVICEBUS_NAMESPACE;
   const serviceBusQueue = process.env.SERVICEBUS_QUEUE;
   if (!serviceBusConnection) {
     checks.push({
       name: "Service Bus",
       status: "ERROR",
-      message: "SERVICEBUS_CONNECTION not configured. Job queue will not work."
+      message: "SERVICEBUS_CONNECTION or SERVICEBUS_NAMESPACE not configured. Job queue will not work."
     });
   } else if (!serviceBusQueue) {
     checks.push({

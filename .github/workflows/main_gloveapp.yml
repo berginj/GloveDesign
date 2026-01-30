@@ -86,7 +86,15 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            HOSTNAME=$(az functionapp show --resource-group GloveDesigner_group --name GloveApp --query defaultHostName -o tsv)
+            HOSTNAME=$(az functionapp show --resource-group GloveDesigner_group --name GloveApp --query defaultHostName -o tsv 2>/dev/null)
+            if [ -z "$HOSTNAME" ]; then
+              HOSTNAME=$(az webapp show --resource-group GloveDesigner_group --name GloveApp --query defaultHostName -o tsv 2>/dev/null)
+            fi
+            if [ -z "$HOSTNAME" ]; then
+              echo "Failed to resolve function app hostname."
+              az functionapp list --resource-group GloveDesigner_group -o table || true
+              exit 1
+            fi
             echo "Checking health at https://$HOSTNAME/api/health"
             for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
               HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" "https://$HOSTNAME/api/health")

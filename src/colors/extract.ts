@@ -32,8 +32,15 @@ async function getSharp(jobId?: string) {
 
 export async function extractPalette(logoUrl: string, cssUrls: string[], inlineStyles: string[] = [], jobId?: string): Promise<PaletteResult> {
   const cssColors = await collectCssColors(cssUrls, inlineStyles);
-  const logoColors = await collectLogoColors(logoUrl, jobId);
-  const combined = mergeColors([...cssColors, ...logoColors]).sort((a, b) => b.confidence - a.confidence);
+  const logoResult = await collectLogoColors(logoUrl, jobId);
+  const normalizedCssColors = logoResult.usedLogo
+    ? cssColors
+    : cssColors.map((color) => ({
+        ...color,
+        confidence: Math.max(0.05, color.confidence * 0.75),
+        evidence: Array.from(new Set([...color.evidence, "css-only"])),
+      }));
+  const combined = mergeColors([...normalizedCssColors, ...logoResult.colors]).sort((a, b) => b.confidence - a.confidence);
   const [primary, secondary, accent, neutral] = rankPalette(combined);
   return {
     primary,
@@ -87,23 +94,29 @@ async function collectCssColors(cssUrls: string[], inlineStyles: string[]): Prom
   return colors;
 }
 
-async function collectLogoColors(logoUrl: string, jobId?: string): Promise<PaletteColor[]> {
+async function collectLogoColors(
+  logoUrl: string,
+  jobId?: string
+): Promise<{ colors: PaletteColor[]; usedLogo: boolean }> {
   try {
     const sharp = await getSharp(jobId);
     if (!sharp) {
-      return [];
+      return { colors: [], usedLogo: false };
     }
     const response = await safeFetchBuffer(logoUrl, { timeoutMs: 15000, maxBytes: 2 * 1024 * 1024 });
     const image = sharp(response.data as Buffer);
     const resized = await image.resize(200, 200, { fit: "inside" }).raw().ensureAlpha().toBuffer();
     const colors = kmeansColors(resized, 8);
-    return colors.map((color) => ({
-      hex: color.hex,
-      confidence: Math.min(0.95, 0.5 + color.weight * 0.6),
-      evidence: ["logo"],
-    }));
+    return {
+      usedLogo: colors.length > 0,
+      colors: colors.map((color) => ({
+        hex: color.hex,
+        confidence: Math.min(0.95, 0.5 + color.weight * 0.6),
+        evidence: ["logo"],
+      })),
+    };
   } catch (error) {
-    return [];
+    return { colors: [], usedLogo: false };
   }
 }
 

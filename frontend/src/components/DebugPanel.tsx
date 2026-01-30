@@ -22,6 +22,9 @@ export function DebugPanel() {
   const [queueStatus, setQueueStatus] = useState<Record<string, unknown> | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [deadLetters, setDeadLetters] = useState<Record<string, unknown> | null>(null);
+  const [recentJobs, setRecentJobs] = useState<Array<{ jobId: string; stage?: string; teamUrl?: string }> | null>(null);
+  const [durableStatus, setDurableStatus] = useState<Record<string, unknown> | null>(null);
+  const [requeueResult, setRequeueResult] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     localStorage.setItem("debugFunctionKey", functionKey);
@@ -121,7 +124,10 @@ export function DebugPanel() {
       return;
     }
     setMessage(null);
-    await runRequest("GET /api/debug/jobs", `${API_BASE}/api/debug/jobs?limit=25`, { headers });
+    const body = await runRequest("GET /api/debug/jobs", `${API_BASE}/api/debug/jobs?limit=25`, { headers });
+    if ((body as { jobs?: Array<{ jobId: string; stage?: string; teamUrl?: string }> })?.jobs) {
+      setRecentJobs((body as { jobs: Array<{ jobId: string; stage?: string; teamUrl?: string }> }).jobs);
+    }
   };
 
   const loadDeadLetters = async () => {
@@ -164,7 +170,45 @@ export function DebugPanel() {
       return;
     }
     setMessage(null);
-    await runRequest("GET /api/debug/durable/:id", `${API_BASE}/api/debug/durable/${jobId}?history=false&input=true`, {
+    const body = await runRequest(
+      "GET /api/debug/durable/:id",
+      `${API_BASE}/api/debug/durable/${jobId}?history=false&input=true`,
+      {
+        headers,
+      }
+    );
+    if (body) {
+      setDurableStatus(body as Record<string, unknown>);
+    }
+  };
+
+  const requeueDeadLetters = async () => {
+    if (!API_BASE) {
+      setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
+      return;
+    }
+    setMessage(null);
+    const body = await runRequest("POST /api/debug/requeue", `${API_BASE}/api/debug/requeue?limit=1`, {
+      method: "POST",
+      headers,
+    });
+    if (body) {
+      setRequeueResult(body as Record<string, unknown>);
+    }
+  };
+
+  const cancelJob = async () => {
+    if (!API_BASE) {
+      setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
+      return;
+    }
+    if (!jobId.trim()) {
+      setMessage("Enter a jobId to cancel.");
+      return;
+    }
+    setMessage(null);
+    await runRequest("POST /api/jobs/:id/cancel", `${API_BASE}/api/jobs/${jobId}/cancel`, {
+      method: "POST",
       headers,
     });
   };
@@ -247,6 +291,9 @@ export function DebugPanel() {
             <button className="secondary" onClick={fetchDurableStatus}>
               Durable Status
             </button>
+            <button className="secondary" onClick={cancelJob}>
+              Cancel Job
+            </button>
             <button className="secondary" onClick={pingApi}>
               Ping API
             </button>
@@ -255,6 +302,9 @@ export function DebugPanel() {
             </button>
             <button className="secondary" onClick={loadDeadLetters}>
               Dead Letters
+            </button>
+            <button className="secondary" onClick={requeueDeadLetters}>
+              Requeue Dead Letter
             </button>
             <button className="secondary" onClick={loadRecentJobs}>
               Recent Jobs
@@ -275,6 +325,35 @@ export function DebugPanel() {
             <div className="summary">
               <strong>Dead Letters</strong>
               <pre>{JSON.stringify(deadLetters, null, 2)}</pre>
+            </div>
+          )}
+          {requeueResult && (
+            <div className="summary">
+              <strong>Requeue Result</strong>
+              <pre>{JSON.stringify(requeueResult, null, 2)}</pre>
+            </div>
+          )}
+          {durableStatus && (
+            <div className="summary">
+              <strong>Durable Status</strong>
+              <pre>{JSON.stringify(durableStatus, null, 2)}</pre>
+            </div>
+          )}
+          {recentJobs && (
+            <div className="summary">
+              <strong>Recent Jobs</strong>
+              <div className="list">
+                {recentJobs.map((job) => (
+                  <button
+                    key={job.jobId}
+                    className="link-button"
+                    onClick={() => setJobId(job.jobId)}
+                    type="button"
+                  >
+                    {job.jobId} · {job.stage ?? "unknown"}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

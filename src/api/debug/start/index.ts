@@ -12,6 +12,7 @@ export async function startOrchestrationDirect(request: HttpRequest, context: In
   const mode = body.mode === "autofill" ? "autofill" : "proposal";
   const normalizedUrl = ensureHttpScheme(body.teamUrl);
   const jobId = uuidv4();
+  const nowIso = new Date().toISOString();
 
   const store = createJobStoreFromEnv();
   if (store) {
@@ -21,8 +22,10 @@ export async function startOrchestrationDirect(request: HttpRequest, context: In
       teamUrl: normalizedUrl,
       mode,
       stage: "received",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      stageTimestamps: { received: nowIso },
+      retryCount: 0,
     });
   }
 

@@ -21,7 +21,8 @@ export async function retryJob(request: HttpRequest, context: InvocationContext)
 
   const client = df.getClient(context) as any;
   await client.startNew("jobOrchestrator", jobId, { jobId, teamUrl: job.teamUrl, mode: job.mode });
-  await store.updateStage(jobId, "received");
+  const nextRetry = (job.retryCount ?? 0) + 1;
+  await store.updateStage(jobId, "queued", { retryCount: nextRetry, lastRetryAt: new Date().toISOString() });
   context.log(`Retried job ${jobId}.`);
   return { status: 202, jsonBody: { jobId, retried: true } };
 }

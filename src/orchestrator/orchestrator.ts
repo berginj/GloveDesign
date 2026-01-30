@@ -19,6 +19,10 @@ const storageRetryOptions = {
   retryTimeoutInMilliseconds: 60000,
 };
 
+const crawlTimeoutMs = parseInt(process.env.BRANDING_CRAWL_TIMEOUT_MS ?? "120000", 10);
+const logoTimeoutMs = parseInt(process.env.BRANDING_LOGO_TIMEOUT_MS ?? "60000", 10);
+const paletteTimeoutMs = parseInt(process.env.BRANDING_PALETTE_TIMEOUT_MS ?? "60000", 10);
+
 const orchestrator = function* (context: any): Generator<Task, unknown, unknown> {
   const input = context.df.getInput() as JobRequest & { jobId: string };
   const jobId = input.jobId;
@@ -42,24 +46,36 @@ const orchestrator = function* (context: any): Generator<Task, unknown, unknown>
 
     currentActivity = "crawlSite";
     context.log(`[Orchestrator] ${jobId}: Starting activity: ${currentActivity}`);
-    const crawlReport = (yield context.df.callActivityWithRetry("crawlSite", networkRetryOptions, input)) as CrawlReport;
+    const crawlReport = (yield* callActivityWithTimeout<CrawlReport>(
+      context,
+      "crawlSite",
+      networkRetryOptions,
+      input,
+      crawlTimeoutMs
+    )) as CrawlReport;
     context.log(`[Orchestrator] ${jobId}: Crawl completed. Pages: ${crawlReport.visited.length}, Images: ${crawlReport.imageCandidates.length}`);
     yield context.df.callActivityWithRetry("updateJobStage", storageRetryOptions, { jobId, stage: "crawled" });
 
     currentActivity = "selectLogo";
     context.log(`[Orchestrator] ${jobId}: Starting activity: ${currentActivity}`);
-    const logo = (yield context.df.callActivityWithRetry("selectLogo", networkRetryOptions, { jobId, crawlReport })) as LogoScore;
+    const logo = (yield* callActivityWithTimeout<LogoScore>(
+      context,
+      "selectLogo",
+      networkRetryOptions,
+      { jobId, crawlReport },
+      logoTimeoutMs
+    )) as LogoScore;
     context.log(`[Orchestrator] ${jobId}: Logo selected. Score: ${logo.score}, URL: ${logo.url}`);
     yield context.df.callActivityWithRetry("updateJobStage", storageRetryOptions, { jobId, stage: "logo_selected" });
 
     currentActivity = "extractColors";
     context.log(`[Orchestrator] ${jobId}: Starting activity: ${currentActivity}`);
-    const palette = (yield context.df.callActivityWithRetry("extractColors", networkRetryOptions, {
+    const palette = (yield* callActivityWithTimeout<PaletteResult>(context, "extractColors", networkRetryOptions, {
       jobId,
       logoUrl: logo.url,
       cssUrls: crawlReport.cssUrls,
       inlineStyles: crawlReport.inlineStyles,
-    })) as PaletteResult;
+    }, paletteTimeoutMs)) as PaletteResult;
     context.log(`[Orchestrator] ${jobId}: Colors extracted. Primary: ${palette.primary?.hex}, Secondary: ${palette.secondary?.hex}`);
     yield context.df.callActivityWithRetry("updateJobStage", storageRetryOptions, { jobId, stage: "colors_extracted" });
 
@@ -135,6 +151,26 @@ const orchestrator = function* (context: any): Generator<Task, unknown, unknown>
     return { jobId, error: errorMessage, errorDetails };
   }
 };
+
+function* callActivityWithTimeout<T>(
+  context: any,
+  name: string,
+  retryOptions: any | null,
+  input: unknown,
+  timeoutMs: number
+): Generator<Task, T, unknown> {
+  const activityTask = retryOptions
+    ? context.df.callActivityWithRetry(name, retryOptions, input)
+    : context.df.callActivity(name, input);
+  const timeoutAt = new Date(context.df.currentUtcDateTime.getTime() + timeoutMs);
+  const timeoutTask = context.df.createTimer(timeoutAt);
+  const winner = (yield context.df.Task.any([activityTask, timeoutTask])) as Task;
+  if (winner === timeoutTask) {
+    throw new Error(`${name} timed out after ${Math.round(timeoutMs / 1000)}s`);
+  }
+  timeoutTask.cancel();
+  return activityTask.result as T;
+}
 
 function getActivityErrorMessage(activity: string, error: unknown): string {
   const errorStr = String(error);

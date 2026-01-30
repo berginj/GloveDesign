@@ -12,6 +12,9 @@ export interface JobRecord {
   stage: JobStage;
   createdAt: string;
   updatedAt: string;
+  stageTimestamps?: Partial<Record<JobStage, string>>;
+  retryCount?: number;
+  lastRetryAt?: string;
   error?: string;
   errorDetails?: string;
   autofillAttempted?: boolean;
@@ -30,7 +33,8 @@ export type JobStage =
   | "design_generated"
   | "wizard_attempted"
   | "completed"
-  | "failed";
+  | "failed"
+  | "canceled";
 
 export interface CrawlReport {
   startUrl: string;

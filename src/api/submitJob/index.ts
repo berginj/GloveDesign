@@ -29,16 +29,6 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
 
   await store.init();
 
-  const jobId = uuidv4();
-  const job: JobRecord = {
-    jobId,
-    teamUrl: normalizedUrl,
-    mode: body.mode,
-    stage: "received",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
   const ttlHours = parseInt(process.env.BRANDING_CACHE_TTL_HOURS ?? "24", 10);
   const cacheTtl = Number.isFinite(ttlHours) ? ttlHours : 24;
   const cached = await store.getLatestCompletedJobByTeamUrl(normalizedUrl);
@@ -49,6 +39,30 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
       return { status: 200, jsonBody: { jobId: cached.jobId, cached: true } };
     }
   }
+
+  const inProgressTtlMinutes = parseInt(process.env.BRANDING_IN_PROGRESS_TTL_MINUTES ?? "15", 10);
+  const inProgressTtlMs = Number.isFinite(inProgressTtlMinutes) ? inProgressTtlMinutes * 60 * 1000 : 15 * 60 * 1000;
+  const latest = await store.getLatestJobByTeamUrl(normalizedUrl);
+  if (latest && latest.stage !== "completed" && latest.stage !== "failed" && latest.stage !== "canceled") {
+    const ageMs = Date.now() - Date.parse(latest.updatedAt);
+    if (ageMs >= 0 && ageMs <= inProgressTtlMs) {
+      context.log(`Reusing in-progress job ${latest.jobId} for ${normalizedUrl}.`);
+      return { status: 200, jsonBody: { jobId: latest.jobId, cached: true, inProgress: true } };
+    }
+  }
+
+  const jobId = uuidv4();
+  const nowIso = new Date().toISOString();
+  const job: JobRecord = {
+    jobId,
+    teamUrl: normalizedUrl,
+    mode: body.mode,
+    stage: "received",
+    createdAt: nowIso,
+    updatedAt: nowIso,
+    stageTimestamps: { received: nowIso },
+    retryCount: 0,
+  };
 
   await store.upsertJob(job);
 

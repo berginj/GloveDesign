@@ -468,6 +468,26 @@ textarea {
   text-decoration: underline;
 }
 
+.list {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.link-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
 .brand-result {
   margin-top: 16px;
   display: grid;

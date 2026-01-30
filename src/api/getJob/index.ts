@@ -18,7 +18,8 @@ export async function getJob(request: HttpRequest, context: InvocationContext): 
     return { status: 404, jsonBody: { error: "Job not found." } };
   }
 
-  const status = job.stage === "completed" ? "Succeeded" : job.stage === "failed" ? "Failed" : "Running";
+  const status =
+    job.stage === "completed" ? "Succeeded" : job.stage === "failed" || job.stage === "canceled" ? "Failed" : "Running";
   return {
     status: 200,
     jsonBody: {
@@ -29,6 +30,9 @@ export async function getJob(request: HttpRequest, context: InvocationContext): 
       status,
       createdAt: job.createdAt,
       updatedAt: job.updatedAt,
+      stageTimestamps: job.stageTimestamps,
+      retryCount: job.retryCount,
+      lastRetryAt: job.lastRetryAt,
       outputs: job.outputs,
       error: job.error,
       errorDetails: job.errorDetails,

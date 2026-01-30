@@ -25,6 +25,7 @@ export function DebugPanel() {
   const [recentJobs, setRecentJobs] = useState<Array<{ jobId: string; stage?: string; teamUrl?: string }> | null>(null);
   const [durableStatus, setDurableStatus] = useState<Record<string, unknown> | null>(null);
   const [requeueResult, setRequeueResult] = useState<Record<string, unknown> | null>(null);
+  const [healthStatus, setHealthStatus] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     localStorage.setItem("debugFunctionKey", functionKey);
@@ -238,6 +239,18 @@ export function DebugPanel() {
     await runRequest("GET /api/catalog/brands", `${API_BASE}/api/catalog/brands`, { headers });
   };
 
+  const checkHealth = async () => {
+    if (!API_BASE) {
+      setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
+      return;
+    }
+    setMessage(null);
+    const body = await runRequest("GET /api/health", `${API_BASE}/api/health`, { headers });
+    if (body) {
+      setHealthStatus(body as Record<string, unknown>);
+    }
+  };
+
   return (
     <div className="debug-page">
       <div className="debug-header">
@@ -297,6 +310,9 @@ export function DebugPanel() {
             <button className="secondary" onClick={pingApi}>
               Ping API
             </button>
+            <button className="secondary" onClick={checkHealth}>
+              Health Check
+            </button>
             <button className="secondary" onClick={loadQueueStatus}>
               Queue Status
             </button>
@@ -337,6 +353,12 @@ export function DebugPanel() {
             <div className="summary">
               <strong>Durable Status</strong>
               <pre>{JSON.stringify(durableStatus, null, 2)}</pre>
+            </div>
+          )}
+          {healthStatus && (
+            <div className="summary">
+              <strong>Health</strong>
+              <pre>{JSON.stringify(healthStatus, null, 2)}</pre>
             </div>
           )}
           {recentJobs && (

@@ -54,7 +54,7 @@ export async function requeueDeadLetters(request: HttpRequest, context: Invocati
         });
       }
 
-      requeued.push({ messageId: message.messageId ?? undefined, jobId: body?.jobId });
+      requeued.push({ messageId: normalizeMessageId(message.messageId), jobId: body?.jobId });
     }
 
     await receiver.close();
@@ -82,3 +82,13 @@ app.http("debugRequeueDeadLetters", {
   route: "debug/requeue",
   handler: requeueDeadLetters,
 });
+
+function normalizeMessageId(value: string | number | Buffer | undefined): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (Buffer.isBuffer(value)) {
+    return value.toString("utf8");
+  }
+  return String(value);
+}

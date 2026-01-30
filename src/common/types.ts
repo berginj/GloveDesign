@@ -22,6 +22,7 @@ export interface JobRecord {
 
 export type JobStage =
   | "received"
+  | "queued"
   | "validated"
   | "crawled"
   | "logo_selected"

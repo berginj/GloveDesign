@@ -2,9 +2,12 @@ import { app, InvocationContext } from "@azure/functions";
 import * as df from "durable-functions";
 import { logError, logInfo } from "../common/logging";
 
+const serviceBusQueueName = process.env.SERVICEBUS_QUEUE || "glovejobs";
+const serviceBusConnectionSetting = process.env.SERVICEBUS_CONNECTION ? "SERVICEBUS_CONNECTION" : "SERVICEBUS_NAMESPACE";
+
 app.serviceBusQueue("jobQueueTrigger", {
-  connection: "SERVICEBUS_CONNECTION",
-  queueName: "%SERVICEBUS_QUEUE%",
+  connection: serviceBusConnectionSetting,
+  queueName: serviceBusQueueName,
   extraInputs: [df.input.durableClient()],
   handler: async (message: any, context: InvocationContext) => {
     const startTime = Date.now();
@@ -12,7 +15,9 @@ app.serviceBusQueue("jobQueueTrigger", {
 
     try {
       // Log raw message for debugging
-      context.log(`[jobQueueTrigger] Received message. Type: ${typeof message}, HasBody: ${Boolean(message?.body)}`);
+      context.log(
+        `[jobQueueTrigger] Received message. Queue=${serviceBusQueueName}. Type=${typeof message}. HasBody=${Boolean(message?.body)}`
+      );
 
       // Parse payload
       const payload = normalizePayload(message?.body ?? message, context);

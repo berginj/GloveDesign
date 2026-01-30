@@ -70,6 +70,11 @@ export async function submitJob(request: HttpRequest, context: InvocationContext
     await sbClient.close();
 
     context.log(`Job ${jobId} enqueued to Service Bus queue '${queueName}'.`);
+    try {
+      await store.updateStage(jobId, "queued");
+    } catch (updateError) {
+      context.error(`Failed to update job ${jobId} to queued: ${String(updateError)}`);
+    }
     return { status: 202, jsonBody: { jobId } };
   } catch (error) {
     context.error(`Failed to enqueue job ${jobId}: ${String(error)}`);

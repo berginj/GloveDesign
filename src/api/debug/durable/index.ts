@@ -12,12 +12,23 @@ export async function durableStatus(request: HttpRequest, context: InvocationCon
   const showHistoryOutput = request.query.get("historyOutput") === "true";
   const showInput = request.query.get("input") !== "false";
 
-  const client = df.getClient(context) as any;
-  const status = await client.getStatus(instanceId, showHistory, showHistoryOutput, showInput);
-  if (!status) {
-    return { status: 404, jsonBody: { error: "Instance not found." } };
+  try {
+    const client = df.getClient(context) as any;
+    const status = await client.getStatus(instanceId, showHistory, showHistoryOutput, showInput);
+    if (!status) {
+      return { status: 404, jsonBody: { error: "Instance not found." } };
+    }
+    return { status: 200, jsonBody: status };
+  } catch (error) {
+    context.error(`debug/durable failed: ${String(error)}`);
+    return {
+      status: 500,
+      jsonBody: {
+        error: "Failed to query durable status",
+        details: String(error),
+      },
+    };
   }
-  return { status: 200, jsonBody: status };
 }
 
 app.http("debugDurableStatus", {

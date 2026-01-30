@@ -49,3 +49,13 @@ app.http("getJob", {
   route: "jobs/{jobId}",
   handler: getJob,
 });
+
+app.http("healthz", {
+  methods: ["GET"],
+  authLevel: "anonymous",
+  route: "healthz",
+  handler: async () => ({
+    status: 200,
+    jsonBody: { status: "ok", timestamp: new Date().toISOString() },
+  }),
+});

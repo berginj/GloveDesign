@@ -54,7 +54,7 @@ jobs:
             az functionapp config appsettings set \
               --name GloveApp \
               --resource-group GloveDesigner_group \
-              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing
+              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing APP_DEPLOYMENT_MARKER=${{ github.run_id }}
 
       - name: Package functions
         run: |
@@ -81,3 +81,20 @@ jobs:
           inlineScript: |
             az functionapp restart --resource-group GloveDesigner_group --name GloveApp
             az functionapp function list --resource-group GloveDesigner_group --name GloveApp -o table
+
+      - name: Health check (fail if missing)
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            HOSTNAME=$(az functionapp show --resource-group GloveDesigner_group --name GloveApp --query defaultHostName -o tsv)
+            echo "Checking health at https://$HOSTNAME/api/health"
+            for i in 1 2 3 4 5; do
+              if curl -sf "https://$HOSTNAME/api/health" > /dev/null; then
+                echo "Health check OK"
+                exit 0
+              fi
+              echo "Health check not ready (attempt $i). Waiting..."
+              sleep 10
+            done
+            echo "Health check failed"
+            exit 1

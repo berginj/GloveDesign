@@ -56,7 +56,7 @@ jobs:
             az functionapp config appsettings set \
               --name "$FUNCTION_APP_NAME" \
               --resource-group "$AZURE_RESOURCE_GROUP" \
-              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing
+              --settings FUNCTIONS_EXTENSION_VERSION=~4 AzureWebJobsFeatureFlags=EnableWorkerIndexing APP_DEPLOYMENT_MARKER=${{ github.run_id }}
 
       - name: Deploy Function App (zip)
         uses: azure/CLI@v2
@@ -73,3 +73,20 @@ jobs:
           inlineScript: |
             az functionapp restart --resource-group "$AZURE_RESOURCE_GROUP" --name "$FUNCTION_APP_NAME"
             az functionapp function list --resource-group "$AZURE_RESOURCE_GROUP" --name "$FUNCTION_APP_NAME" -o table
+
+      - name: Health check (fail if missing)
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            HOSTNAME=$(az functionapp show --resource-group "$AZURE_RESOURCE_GROUP" --name "$FUNCTION_APP_NAME" --query defaultHostName -o tsv)
+            echo "Checking health at https://$HOSTNAME/api/health"
+            for i in 1 2 3 4 5; do
+              if curl -sf "https://$HOSTNAME/api/health" > /dev/null; then
+                echo "Health check OK"
+                exit 0
+              fi
+              echo "Health check not ready (attempt $i). Waiting..."
+              sleep 10
+            done
+            echo "Health check failed"
+            exit 1

@@ -32,7 +32,32 @@ export async function startOrchestrationDirect(request: HttpRequest, context: In
   const client = df.getClient(context) as any;
   const instanceId = await client.startNew("jobOrchestrator", jobId, { jobId, teamUrl: normalizedUrl, mode });
   context.log(`Direct orchestration started: ${instanceId}`);
-  return { status: 202, jsonBody: { jobId, direct: true } };
+
+  const status = await waitForDurableStatus(client, instanceId, context);
+  if (!status) {
+    const errorMessage = "Durable instance not found after startNew.";
+    context.error(`[debug/start] ${errorMessage} instanceId=${instanceId}`);
+    if (store) {
+      await store.updateStage(jobId, "failed", {
+        error: errorMessage,
+        errorDetails: "Durable Functions extension returned 404 for instanceId.",
+        instanceId,
+      });
+    }
+    return {
+      status: 500,
+      jsonBody: {
+        error: errorMessage,
+        jobId,
+        instanceId,
+      },
+    };
+  }
+
+  if (store) {
+    await store.updateStage(jobId, "queued", { instanceId });
+  }
+  return { status: 202, jsonBody: { jobId, instanceId, direct: true, durableStatus: status } };
 }
 
 app.http("debugStartOrchestration", {
@@ -42,3 +67,18 @@ app.http("debugStartOrchestration", {
   extraInputs: [df.input.durableClient()],
   handler: startOrchestrationDirect,
 });
+
+async function waitForDurableStatus(client: any, instanceId: string, context: InvocationContext) {
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    try {
+      const status = await client.getStatus(instanceId, false, false, true);
+      if (status) {
+        return status;
+      }
+    } catch (error) {
+      context.log(`[debug/start] Status poll attempt ${attempt} failed: ${String(error)}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  return null;
+}

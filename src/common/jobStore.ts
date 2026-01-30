@@ -18,6 +18,7 @@ export interface JobStore {
       wizardWarnings?: string[];
       retryCount?: number;
       lastRetryAt?: string;
+      instanceId?: string;
     }
   ): Promise<void>;
   getJob(jobId: string): Promise<JobRecord | null>;
@@ -62,6 +63,7 @@ export class CosmosJobStore implements JobStore {
       wizardWarnings?: string[];
       retryCount?: number;
       lastRetryAt?: string;
+      instanceId?: string;
     } = {}
   ): Promise<void> {
     const { resource } = await this.container.item(jobId, jobId).read<JobRecord>();
@@ -83,6 +85,7 @@ export class CosmosJobStore implements JobStore {
       wizardWarnings: updates.wizardWarnings ?? resource.wizardWarnings,
       retryCount: updates.retryCount ?? resource.retryCount,
       lastRetryAt: updates.lastRetryAt ?? resource.lastRetryAt,
+      instanceId: updates.instanceId ?? resource.instanceId,
     };
     await this.container.items.upsert(updated);
   }
@@ -176,6 +179,7 @@ export class TableJobStore implements JobStore {
       wizardWarnings?: string[];
       retryCount?: number;
       lastRetryAt?: string;
+      instanceId?: string;
     } = {}
   ): Promise<void> {
     const existing = await this.getJob(jobId);
@@ -197,6 +201,7 @@ export class TableJobStore implements JobStore {
       wizardWarnings: updates.wizardWarnings ?? existing.wizardWarnings,
       retryCount: updates.retryCount ?? existing.retryCount,
       lastRetryAt: updates.lastRetryAt ?? existing.lastRetryAt,
+      instanceId: updates.instanceId ?? existing.instanceId,
     };
 
     await this.table.upsertEntity({

@@ -13,6 +13,7 @@ interface RequestLogEntry {
 export function DebugPanel() {
   const [teamUrl, setTeamUrl] = useState(DEFAULT_TEAM_URL);
   const [jobId, setJobId] = useState("");
+  const [durableInstanceId, setDurableInstanceId] = useState("");
   const [functionKey, setFunctionKey] = useState(() => {
     const stored = localStorage.getItem("debugFunctionKey");
     return stored ?? import.meta.env.VITE_FUNCTION_KEY ?? "";
@@ -22,7 +23,7 @@ export function DebugPanel() {
   const [queueStatus, setQueueStatus] = useState<Record<string, unknown> | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [deadLetters, setDeadLetters] = useState<Record<string, unknown> | null>(null);
-  const [recentJobs, setRecentJobs] = useState<Array<{ jobId: string; stage?: string; teamUrl?: string }> | null>(null);
+  const [recentJobs, setRecentJobs] = useState<Array<{ jobId: string; stage?: string; teamUrl?: string; instanceId?: string }> | null>(null);
   const [durableStatus, setDurableStatus] = useState<Record<string, unknown> | null>(null);
   const [requeueResult, setRequeueResult] = useState<Record<string, unknown> | null>(null);
   const [healthStatus, setHealthStatus] = useState<Record<string, unknown> | null>(null);
@@ -88,7 +89,11 @@ export function DebugPanel() {
       body: JSON.stringify({ teamUrl, mode: "proposal" }),
     });
     if ((body as { jobId?: string })?.jobId) {
-      setJobId((body as { jobId: string }).jobId);
+      const response = body as { jobId: string; instanceId?: string };
+      setJobId(response.jobId);
+      if (response.instanceId) {
+        setDurableInstanceId(response.instanceId);
+      }
     }
   };
 
@@ -126,8 +131,8 @@ export function DebugPanel() {
     }
     setMessage(null);
     const body = await runRequest("GET /api/debug/jobs", `${API_BASE}/api/debug/jobs?limit=25`, { headers });
-    if ((body as { jobs?: Array<{ jobId: string; stage?: string; teamUrl?: string }> })?.jobs) {
-      setRecentJobs((body as { jobs: Array<{ jobId: string; stage?: string; teamUrl?: string }> }).jobs);
+    if ((body as { jobs?: Array<{ jobId: string; stage?: string; teamUrl?: string; instanceId?: string }> })?.jobs) {
+      setRecentJobs((body as { jobs: Array<{ jobId: string; stage?: string; teamUrl?: string; instanceId?: string }> }).jobs);
     }
   };
 
@@ -157,7 +162,11 @@ export function DebugPanel() {
       body: JSON.stringify({ teamUrl, mode: "proposal" }),
     });
     if ((body as { jobId?: string })?.jobId) {
-      setJobId((body as { jobId: string }).jobId);
+      const response = body as { jobId: string; instanceId?: string };
+      setJobId(response.jobId);
+      if (response.instanceId) {
+        setDurableInstanceId(response.instanceId);
+      }
     }
   };
 
@@ -166,14 +175,15 @@ export function DebugPanel() {
       setMessage("VITE_API_BASE is not set. The debug panel cannot reach the Functions API.");
       return;
     }
-    if (!jobId.trim()) {
-      setMessage("Enter a jobId to inspect durable status.");
+    const instanceId = durableInstanceId.trim() || jobId.trim();
+    if (!instanceId) {
+      setMessage("Enter a jobId or instanceId to inspect durable status.");
       return;
     }
     setMessage(null);
     const body = await runRequest(
       "GET /api/debug/durable/:id",
-      `${API_BASE}/api/debug/durable/${jobId}?history=false&input=true`,
+      `${API_BASE}/api/debug/durable/${instanceId}?history=false&input=true`,
       {
         headers,
       }
@@ -271,6 +281,8 @@ export function DebugPanel() {
             <strong>API Base</strong>: {API_BASE || "Not set"}
             <br />
             <strong>Function Key</strong>: {functionKey ? "Set" : "Missing"}
+            <br />
+            <strong>Durable Instance</strong>: {durableInstanceId || "(not set)"}
           </div>
           <div className="field-grid">
             <div>
@@ -288,6 +300,14 @@ export function DebugPanel() {
             <div>
               <label>Job ID</label>
               <input value={jobId} onChange={(event) => setJobId(event.target.value)} />
+            </div>
+            <div>
+              <label>Durable Instance ID (optional)</label>
+              <input
+                value={durableInstanceId}
+                onChange={(event) => setDurableInstanceId(event.target.value)}
+                placeholder="instanceId returned by debug/start"
+              />
             </div>
           </div>
           <div className="cta">
@@ -369,10 +389,13 @@ export function DebugPanel() {
                   <button
                     key={job.jobId}
                     className="link-button"
-                    onClick={() => setJobId(job.jobId)}
+                    onClick={() => {
+                      setJobId(job.jobId);
+                      setDurableInstanceId(job.instanceId ?? "");
+                    }}
                     type="button"
                   >
-                    {job.jobId} · {job.stage ?? "unknown"}
+                    {job.jobId} · {job.stage ?? "unknown"} {job.instanceId ? "· instance set" : ""}
                   </button>
                 ))}
               </div>

@@ -1,6 +1,7 @@
 import { app, InvocationContext } from "@azure/functions";
 import * as df from "durable-functions";
 import { logError, logInfo } from "../common/logging";
+import { createJobStoreFromEnv } from "../common/jobStore";
 
 const serviceBusQueueName = process.env.SERVICEBUS_QUEUE || "glovejobs";
 const serviceBusConnectionSetting = process.env.SERVICEBUS_CONNECTION ? "SERVICEBUS_CONNECTION" : "SERVICEBUS_NAMESPACE";
@@ -71,6 +72,21 @@ app.serviceBusQueue("jobQueueTrigger", {
       const duration = Date.now() - startTime;
       context.log(`[jobQueueTrigger] Successfully started orchestration with ID = '${instanceId}' for job ${jobId}. Duration: ${duration}ms`);
       logInfo("trigger_success", { jobId, stage: "trigger" }, { instanceId, duration, teamUrl: payload.teamUrl });
+
+      try {
+        const store = createJobStoreFromEnv();
+        if (store) {
+          await store.init();
+          const current = await store.getJob(jobId);
+          const currentStage = current?.stage ?? "queued";
+          await store.updateStage(jobId, currentStage, { instanceId });
+          context.log(`[jobQueueTrigger] Stored instanceId for job ${jobId}.`);
+        } else {
+          context.log(`[jobQueueTrigger] Job store not configured. Skipping instanceId update.`);
+        }
+      } catch (storeError) {
+        context.error(`[jobQueueTrigger] Failed to persist instanceId for job ${jobId}: ${String(storeError)}`);
+      }
 
     } catch (error) {
       const duration = Date.now() - startTime;

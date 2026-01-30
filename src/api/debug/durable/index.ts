@@ -20,12 +20,22 @@ export async function durableStatus(request: HttpRequest, context: InvocationCon
     }
     return { status: 200, jsonBody: status };
   } catch (error) {
+    const errorText = String(error);
+    if (errorText.includes("HTTP 404") || errorText.includes("404 response")) {
+      return {
+        status: 404,
+        jsonBody: {
+          error: "Instance not found.",
+          details: errorText,
+        },
+      };
+    }
     context.error(`debug/durable failed: ${String(error)}`);
     return {
       status: 500,
       jsonBody: {
         error: "Failed to query durable status",
-        details: String(error),
+        details: errorText,
       },
     };
   }

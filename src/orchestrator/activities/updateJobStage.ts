@@ -11,6 +11,7 @@ export default async function updateJobStageActivity(input: {
   autofillAttempted?: boolean;
   autofillSucceeded?: boolean;
   wizardWarnings?: string[];
+  instanceId?: string;
 }) {
   logInfo("update_stage_start", { jobId: input.jobId, stage: input.stage }, {
     targetStage: input.stage,
@@ -49,6 +50,7 @@ export default async function updateJobStageActivity(input: {
       autofillAttempted: input.autofillAttempted,
       autofillSucceeded: input.autofillSucceeded,
       wizardWarnings: input.wizardWarnings,
+      instanceId: input.instanceId,
     });
     logInfo("update_stage_success", { jobId: input.jobId, stage: input.stage }, {
       newStage: input.stage,

@@ -9,6 +9,7 @@ export interface JobRecord {
   jobId: string;
   teamUrl: string;
   mode: JobMode;
+  instanceId?: string;
   stage: JobStage;
   createdAt: string;
   updatedAt: string;

@@ -5,6 +5,7 @@ runStartupDiagnostics();
 import "./api/submitJob/index";
 import "./api/getJob/index";
 import "./api/cancelJob/index";
+import "./api/health/index";
 import "./api/catalog/brands/index";
 import "./api/catalog/colors/index";
 import "./api/catalog/materials/index";

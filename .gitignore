@@ -4,3 +4,14 @@ dist
 output
 .env
 .DS_Store
+
+# Azure Functions
+local.settings.json
+.azure/
+azurite/
+*.log
+
+# IDE
+.vscode/
+.vs/
+.idea/

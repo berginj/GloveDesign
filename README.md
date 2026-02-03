@@ -26,6 +26,12 @@ POST /jobs (Functions API) ---> Service Bus queue ---> Durable Orchestrator
                                                 (HTTP or Service Bus job)
 ```
 
+## Documentation
+
+- **[Production Deployment Guide](./docs/PRODUCTION.md)** - Complete guide for deploying to Azure, monitoring, alerts, and operational procedures
+- **[Troubleshooting Guide](./docs/TROUBLESHOOTING.md)** - Solutions for common issues (jobs stuck, dead letters, configuration errors)
+- **[Customizer Documentation](./docs/CUSTOMIZER.md)** - Interactive glove designer architecture and requirements
+
 ## Local development
 ### Prerequisites
 - Node.js 20+

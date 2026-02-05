@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Team - Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a2e; /* Navy Blue - Primary */
+        }
+
+        header {
+            background-color: #dc143c; /* Crimson Red - Secondary */
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .logo-container {
+            text-align: center;
+            padding: 40px;
+            background-color: white;
+        }
+
+        .logo-container img {
+            max-width: 400px;
+            height: auto;
+        }
+
+        main {
+            padding: 40px;
+            color: white;
+        }
+
+        .accent-section {
+            background-color: #ffd700; /* Gold - Accent */
+            color: #1a1a2e;
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .team-info {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #dc143c;
+        }
+
+        footer {
+            background-color: #0f0f1e;
+            color: #ffd700;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Test Thunder Baseball</h1>
+        <p>2024 Season Champions</p>
+    </header>
+
+    <div class="logo-container">
+        <img src="logo.svg" alt="Test Thunder Team Logo" id="team-logo">
+    </div>
+
+    <main>
+        <h2>Welcome to Test Thunder Baseball</h2>
+
+        <div class="accent-section">
+            <h3>About Our Team</h3>
+            <p>The Test Thunder is a competitive youth baseball team dedicated to developing young athletes. Our team colors are Navy Blue, Crimson Red, and Gold.</p>
+        </div>
+
+        <div class="team-info">
+            <h3>Team Colors</h3>
+            <p><strong>Primary:</strong> Navy Blue (#1a1a2e)</p>
+            <p><strong>Secondary:</strong> Crimson Red (#dc143c)</p>
+            <p><strong>Accent:</strong> Gold (#ffd700)</p>
+        </div>
+
+        <div class="team-info">
+            <h3>Season Information</h3>
+            <p>Practice: Tuesdays and Thursdays, 5:00 PM - 7:00 PM</p>
+            <p>Home Field: Thunder Stadium, 123 Baseball Lane</p>
+            <p>Contact: coach@testthunder.example.com</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Test Thunder Baseball. All rights reserved.</p>
+        <p>Contact us: info@testthunder.example.com | (555) 123-4567</p>
+    </footer>
+
+    <script>
+        // Fallback if logo image fails to load
+        document.getElementById('team-logo').onerror = function() {
+            this.style.display = 'none';
+            document.querySelector('.logo-container').innerHTML += '<p>Logo would be displayed here</p>';
+        };
+    </script>
+</body>
+</html>

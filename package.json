@@ -7,7 +7,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "func start",
-    "test": "vitest run --config vitest.config.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "vitest run test/integration",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:server": "node test-fixtures/test-server.js",
     "lint": "eslint . --ext .ts",
     "start:cli": "tsx src/cli/index.ts",
     "start:func": "func start",

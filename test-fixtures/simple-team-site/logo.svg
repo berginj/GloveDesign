@@ -1,0 +1,13 @@
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="200" cy="200" r="180" fill="#1a1a2e"/>
+
+  <!-- Red lightning bolt -->
+  <path d="M200 60 L180 180 L220 180 L160 340 L240 200 L200 200 Z" fill="#dc143c" stroke="#ffd700" stroke-width="4"/>
+
+  <!-- Gold outline circle -->
+  <circle cx="200" cy="200" r="180" fill="none" stroke="#ffd700" stroke-width="8"/>
+
+  <!-- Team name -->
+  <text x="200" y="360" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#ffd700" text-anchor="middle">THUNDER</text>
+</svg>

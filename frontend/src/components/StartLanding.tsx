@@ -55,7 +55,8 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
     setCurrentStage(null);
     try {
       const job = await startBrandingJob(teamUrl.trim());
-      setCached(Boolean(job.cached));
+      const isCached = Boolean(job.cached);
+      setCached(isCached);
       setJobId(job.jobId);
 
       // Wait a moment before first poll to give orchestrator time to start
@@ -63,14 +64,16 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
 
       const start = Date.now();
       let result = await getJobStatus(job.jobId);
-      setCurrentStage(result.stage);
+      let lastStage = result.stage;
+      setCurrentStage(lastStage);
       setMessage(`Scanning… stage: ${result.stage}`);
       while (result.status !== "Succeeded" && result.status !== "Failed" && Date.now() - start < 600000) {
         await new Promise((resolve) => setTimeout(resolve, 2500));
         try {
           result = await getJobStatus(job.jobId);
-          if (result.stage && result.stage !== currentStage) {
-            setCurrentStage(result.stage);
+          if (result.stage && result.stage !== lastStage) {
+            lastStage = result.stage;
+            setCurrentStage(lastStage);
             setMessage(`Scanning… stage: ${result.stage}`);
           }
         } catch (pollError) {
@@ -98,7 +101,7 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
         onBrandingReady({ logoUrl: logo, palette: null });
       }
       setStatus("done");
-      setMessage(cached ? "Branding loaded from cache. Review the palette below." : "Branding captured. Review the palette below.");
+      setMessage(isCached ? "Branding loaded from cache. Review the palette below." : "Branding captured. Review the palette below.");
     } catch (error) {
       setStatus("error");
       setMessage((error as Error).message ?? "Branding scan failed.");
@@ -119,14 +122,16 @@ export function StartLanding({ design, catalog, onUpdate, onStart, onBrandingRea
     try {
       const start = Date.now();
       let result = await getJobStatus(jobId);
-      setCurrentStage(result.stage);
+      let lastStage = result.stage;
+      setCurrentStage(lastStage);
       setMessage(`Scanning… stage: ${result.stage}`);
       while (result.status !== "Succeeded" && result.status !== "Failed" && Date.now() - start < 600000) {
         await new Promise((resolve) => setTimeout(resolve, 2500));
         try {
           result = await getJobStatus(jobId);
-          if (result.stage && result.stage !== currentStage) {
-            setCurrentStage(result.stage);
+          if (result.stage && result.stage !== lastStage) {
+            lastStage = result.stage;
+            setCurrentStage(lastStage);
             setMessage(`Scanning… stage: ${result.stage}`);
           }
         } catch (pollError) {

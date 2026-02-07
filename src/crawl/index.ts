@@ -4,12 +4,12 @@ import { CrawlReport, ImageCandidate } from "../common/types";
 import { logInfo, logWarn } from "../common/logging";
 import { FetchBudget, safeFetchText, sleep } from "../common/http";
 
-const MAX_IMAGES = 30;
-const MAX_PAGES = 3;
+const MAX_IMAGES = readPositiveInt(process.env.BRANDING_CRAWL_MAX_IMAGES, 40);
+const MAX_PAGES = readPositiveInt(process.env.BRANDING_CRAWL_MAX_PAGES, 6);
 const MAX_BYTES = 25 * 1024 * 1024;
 const MAX_PAGE_BYTES = 2 * 1024 * 1024;
 const MAX_ASSET_BYTES = 5 * 1024 * 1024;
-const MAX_CSS_FILES = 4;
+const MAX_CSS_FILES = readPositiveInt(process.env.BRANDING_CRAWL_MAX_CSS_FILES, 6);
 const REQUEST_DELAY_MS = 150;
 
 export async function crawlSite(startUrl: string, jobId?: string): Promise<CrawlReport> {
@@ -57,6 +57,8 @@ export async function crawlSite(startUrl: string, jobId?: string): Promise<Crawl
     };
   }
 
+  collectRootBrandAssets(startUrl, imageCandidates, seenImages);
+
   const queue = [startUrl];
   const seen = new Set<string>();
   while (queue.length > 0 && visited.length < MAX_PAGES && imageCandidates.length < MAX_IMAGES) {
@@ -80,6 +82,7 @@ export async function crawlSite(startUrl: string, jobId?: string): Promise<Crawl
       const $ = cheerio.load(response.data);
       collectImages($, response.url, imageCandidates, seenImages);
       collectMetaImages($, response.url, imageCandidates, seenImages);
+      collectJsonLdLogos($, response.url, imageCandidates, seenImages);
       collectInlineBackgrounds($, response.url, imageCandidates, seenImages);
       collectSvgReferences($, response.url, imageCandidates, seenImages);
       collectInlineStyles($, inlineStyles);
@@ -87,7 +90,7 @@ export async function crawlSite(startUrl: string, jobId?: string): Promise<Crawl
       await collectCssBackgrounds(cssUrls, seenCss, imageCandidates, seenImages, budget, jobId);
       const links = collectLinks($, current, startUrl);
       for (const link of links) {
-        if (queue.length + visited.length < MAX_PAGES && !seen.has(link)) {
+        if (!seen.has(link) && !queue.includes(link) && queue.length < MAX_PAGES * 4) {
           queue.push(link);
         }
       }
@@ -133,29 +136,50 @@ function collectImages(
     if (images.length >= MAX_IMAGES) {
       return false;
     }
-    const src = $(el).attr("src");
-    if (!src) {
-      return;
-    }
-    const url = resolveUrl(sourceUrl, src);
-    if (!url) {
-      return;
-    }
-    if (seenImages.has(url)) {
-      return;
-    }
-    seenImages.add(url);
     const alt = $(el).attr("alt");
     const classHint = $(el).attr("class");
-    images.push({
-      url,
+    const context = $(el).closest("header,nav,section,main").prop("tagName")?.toLowerCase();
+    const width = parseInt($(el).attr("width") || "", 10) || undefined;
+    const height = parseInt($(el).attr("height") || "", 10) || undefined;
+    const hints = collectHints([alt, classHint, $(el).attr("id"), $(el).attr("data-testid")]);
+
+    const sources = [
+      $(el).attr("src"),
+      $(el).attr("data-src"),
+      $(el).attr("data-original"),
+      $(el).attr("data-lazy-src"),
+      $(el).attr("data-src-large"),
+      pickFromSrcSet($(el).attr("srcset")),
+      pickFromSrcSet($(el).attr("data-srcset")),
+    ].filter(Boolean) as string[];
+
+    for (const source of sources) {
+      if (images.length >= MAX_IMAGES) {
+        return false;
+      }
+      pushImageCandidate(images, seenImages, sourceUrl, source, {
+        sourceUrl,
+        altText: alt,
+        context,
+        width,
+        height,
+        hints,
+      });
+    }
+  });
+
+  $("source[srcset]").each((_i, el) => {
+    if (images.length >= MAX_IMAGES) {
+      return false;
+    }
+    const source = pickFromSrcSet($(el).attr("srcset"));
+    if (!source) {
+      return;
+    }
+    pushImageCandidate(images, seenImages, sourceUrl, source, {
       sourceUrl,
-      altText: alt,
-      context: $(el).closest("header,nav,section,main").prop("tagName")?.toLowerCase(),
-      width: parseInt($(el).attr("width") || "", 10) || undefined,
-      height: parseInt($(el).attr("height") || "", 10) || undefined,
-      fileNameHint: fileName(url),
-      hints: collectHints([alt, classHint, $(el).attr("id")]),
+      context: "picture",
+      hints: collectHints([$(el).attr("type"), $(el).attr("media")]),
     });
   });
 }
@@ -166,32 +190,46 @@ function collectMetaImages(
   images: ImageCandidate[],
   seenImages: Set<string>
 ) {
-  const metas = ["og:image", "twitter:image", "apple-touch-icon", "icon", "shortcut icon"];
-  for (const name of metas) {
-    const selector = name.includes("icon") ? `link[rel~='${name}']` : `meta[property='${name}'], meta[name='${name}']`;
-    $(selector).each((_i, el) => {
+  const metaNames = ["og:image", "twitter:image", "og:logo"];
+  for (const name of metaNames) {
+    $(`meta[property='${name}'], meta[name='${name}']`).each((_i, el) => {
       if (images.length >= MAX_IMAGES) {
         return false;
       }
-      const content = $(el).attr("content") || $(el).attr("href");
+      const content = $(el).attr("content");
       if (!content) {
         return;
       }
-      const url = resolveUrl(sourceUrl, content);
-      if (!url) {
-        return;
-      }
-      if (seenImages.has(url)) {
-        return;
-      }
-      seenImages.add(url);
-      images.push({
-        url,
+      pushImageCandidate(images, seenImages, sourceUrl, content, {
         sourceUrl,
         altText: name,
         context: "meta",
-        fileNameHint: fileName(url),
         hints: collectHints([name]),
+      });
+    });
+  }
+
+  const linkSelectors = [
+    { selector: "link[rel='icon']", label: "icon" },
+    { selector: "link[rel~='icon']", label: "icon" },
+    { selector: "link[rel='shortcut icon']", label: "shortcut icon" },
+    { selector: "link[rel='apple-touch-icon']", label: "apple-touch-icon" },
+    { selector: "link[rel='apple-touch-icon-precomposed']", label: "apple-touch-icon-precomposed" },
+  ];
+  for (const item of linkSelectors) {
+    $(item.selector).each((_i, el) => {
+      if (images.length >= MAX_IMAGES) {
+        return false;
+      }
+      const href = $(el).attr("href");
+      if (!href) {
+        return;
+      }
+      pushImageCandidate(images, seenImages, sourceUrl, href, {
+        sourceUrl,
+        altText: item.label,
+        context: "meta",
+        hints: collectHints([item.label]),
       });
     });
   }
@@ -233,7 +271,7 @@ function collectInlineBackgrounds(
 }
 
 function collectLinks($: cheerio.CheerioAPI, sourceUrl: string, startUrl: string): string[] {
-  const links: string[] = [];
+  const links = new Map<string, number>();
   const start = new URL(startUrl);
   $("a[href]").each((_i, el) => {
     const href = $(el).attr("href");
@@ -248,11 +286,25 @@ function collectLinks($: cheerio.CheerioAPI, sourceUrl: string, startUrl: string
     if (linkUrl.hostname !== start.hostname) {
       return;
     }
-    if (/about|team|club|baseball|home|program|organization|brand/i.test(linkUrl.pathname)) {
-      links.push(linkUrl.toString());
+    if (/\.(pdf|docx?|xlsx?|pptx?|zip|png|jpe?g|webp|gif|svg)$/i.test(linkUrl.pathname)) {
+      return;
     }
+    const candidate = linkUrl.toString();
+    const path = linkUrl.pathname.toLowerCase();
+    if (path === "/") {
+      links.set(candidate, Math.max(links.get(candidate) ?? 0, 5));
+      return;
+    }
+    if (/login|signin|signup|privacy|terms|cookie|account|checkout|cart|wp-admin|admin/.test(path)) {
+      return;
+    }
+    const score = /about|team|club|baseball|home|program|organization|brand|our-story|about-us/.test(path) ? 4 : 1;
+    links.set(candidate, Math.max(links.get(candidate) ?? 0, score));
   });
-  return links.slice(0, MAX_PAGES);
+  return Array.from(links.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)
+    .map(([url]) => url)
+    .slice(0, Math.max(MAX_PAGES * 3, 6));
 }
 
 function collectStylesheets($: cheerio.CheerioAPI, sourceUrl: string, cssUrls: string[], limit: number) {
@@ -266,6 +318,9 @@ function collectStylesheets($: cheerio.CheerioAPI, sourceUrl: string, cssUrls: s
     }
     const url = resolveUrl(sourceUrl, href);
     if (!url) {
+      return;
+    }
+    if (cssUrls.includes(url)) {
       return;
     }
     cssUrls.push(url);
@@ -359,12 +414,12 @@ function collectSvgReferences(
 function collectInlineStyles($: cheerio.CheerioAPI, inlineStyles: string[]) {
   $("style").each((_i, el) => {
     const text = $(el).text();
-    if (text && inlineStyles.length < 5) {
+    if (text && inlineStyles.length < 10) {
       inlineStyles.push(text.slice(0, 10000));
     }
   });
   $("[style]").each((_i, el) => {
-    if (inlineStyles.length >= 100) {
+    if (inlineStyles.length >= 200) {
       return false;
     }
     const style = $(el).attr("style");
@@ -490,4 +545,146 @@ function isLikelyImage(url: string): boolean {
     /\.(png|jpe?g|svg|gif|webp)$/i.test(lower) ||
     lower.includes("brand")
   );
+}
+
+function pushImageCandidate(
+  images: ImageCandidate[],
+  seenImages: Set<string>,
+  baseUrl: string,
+  value: string,
+  metadata: Omit<ImageCandidate, "url" | "fileNameHint">
+) {
+  if (images.length >= MAX_IMAGES) {
+    return;
+  }
+  const url = resolveUrl(baseUrl, value);
+  if (!url || seenImages.has(url)) {
+    return;
+  }
+  seenImages.add(url);
+  images.push({
+    ...metadata,
+    url,
+    fileNameHint: fileName(url),
+  });
+}
+
+function pickFromSrcSet(srcset?: string): string | null {
+  if (!srcset) {
+    return null;
+  }
+  const candidates = srcset
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (!candidates.length) {
+    return null;
+  }
+  const withDescriptors = candidates
+    .map((item) => {
+      const [url, descriptor] = item.split(/\s+/, 2);
+      const score = descriptor?.endsWith("x")
+        ? parseFloat(descriptor)
+        : descriptor?.endsWith("w")
+          ? parseInt(descriptor, 10) / 100
+          : 1;
+      return { url, score: Number.isFinite(score) ? score : 1 };
+    })
+    .filter((item) => Boolean(item.url))
+    .sort((a, b) => b.score - a.score);
+  return withDescriptors[0]?.url ?? null;
+}
+
+function collectJsonLdLogos(
+  $: cheerio.CheerioAPI,
+  sourceUrl: string,
+  images: ImageCandidate[],
+  seenImages: Set<string>
+) {
+  $("script[type='application/ld+json']").each((_i, el) => {
+    if (images.length >= MAX_IMAGES) {
+      return false;
+    }
+    const raw = $(el).text();
+    if (!raw) {
+      return;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    const urls = findJsonImageUrls(parsed, 0);
+    for (const candidate of urls) {
+      if (images.length >= MAX_IMAGES) {
+        return false;
+      }
+      pushImageCandidate(images, seenImages, sourceUrl, candidate, {
+        sourceUrl,
+        context: "jsonld",
+        hints: collectHints(["logo", "organization"]),
+      });
+    }
+  });
+}
+
+function findJsonImageUrls(node: unknown, depth: number): string[] {
+  if (depth > 5 || node == null) {
+    return [];
+  }
+  if (typeof node === "string") {
+    return isLikelyImage(node) || node.includes("/logo") ? [node] : [];
+  }
+  if (Array.isArray(node)) {
+    return node.flatMap((item) => findJsonImageUrls(item, depth + 1));
+  }
+  if (typeof node !== "object") {
+    return [];
+  }
+
+  const result: string[] = [];
+  const record = node as Record<string, unknown>;
+  for (const [key, value] of Object.entries(record)) {
+    const lower = key.toLowerCase();
+    if (["logo", "image", "icon", "contenturl", "thumbnailurl"].includes(lower)) {
+      if (typeof value === "string") {
+        result.push(value);
+      } else if (value && typeof value === "object") {
+        const nested = value as Record<string, unknown>;
+        if (typeof nested.url === "string") {
+          result.push(nested.url);
+        }
+        if (typeof nested.contentUrl === "string") {
+          result.push(nested.contentUrl);
+        }
+      }
+    }
+    result.push(...findJsonImageUrls(value, depth + 1));
+  }
+  return Array.from(new Set(result));
+}
+
+function collectRootBrandAssets(startUrl: string, images: ImageCandidate[], seenImages: Set<string>) {
+  try {
+    const origin = new URL(startUrl).origin;
+    const defaults = ["/favicon.ico", "/apple-touch-icon.png", "/logo.png", "/logo.svg"];
+    for (const path of defaults) {
+      if (images.length >= MAX_IMAGES) {
+        return;
+      }
+      pushImageCandidate(images, seenImages, origin, path, {
+        sourceUrl: origin,
+        context: "root-default",
+        hints: collectHints([path.includes("logo") ? "logo" : "icon"]),
+      });
+    }
+  } catch {
+    // ignore malformed start URL
+  }
+}
+
+function readPositiveInt(raw: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt(raw ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }

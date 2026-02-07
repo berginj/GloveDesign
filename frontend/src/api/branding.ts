@@ -12,6 +12,7 @@ export interface JobStatusResponse {
     palette?: { url?: string };
   };
   error?: string;
+  errorDetails?: string;
 }
 
 export interface PaletteResult {
@@ -40,7 +41,7 @@ export async function startBrandingJob(teamUrl: string): Promise<BrandingJobResp
     body: JSON.stringify({ teamUrl, mode: "proposal" }),
   });
   if (!response.ok) {
-    throw new Error(`Job request failed (${response.status})`);
+    throw new Error(await buildErrorMessage("Job request failed", response));
   }
   return response.json();
 }
@@ -50,7 +51,7 @@ export async function getJobStatus(jobId: string): Promise<JobStatusResponse> {
     headers: buildHeaders(),
   });
   if (!response.ok) {
-    throw new Error(`Status request failed (${response.status})`);
+    throw new Error(await buildErrorMessage("Status request failed", response));
   }
   return response.json();
 }
@@ -65,4 +66,24 @@ export async function fetchPalette(url: string): Promise<PaletteResult | null> {
   } catch {
     return null;
   }
+}
+
+async function buildErrorMessage(prefix: string, response: Response): Promise<string> {
+  let detail = "";
+  try {
+    const payload = await response.clone().json();
+    if (payload && typeof payload === "object") {
+      const typed = payload as { error?: string; message?: string; details?: string };
+      detail = typed.error || typed.message || typed.details || "";
+    }
+  } catch {
+    try {
+      detail = (await response.text()).trim();
+    } catch {
+      detail = "";
+    }
+  }
+
+  const suffix = detail || response.statusText || `HTTP ${response.status}`;
+  return `${prefix} (${response.status}): ${suffix}`;
 }

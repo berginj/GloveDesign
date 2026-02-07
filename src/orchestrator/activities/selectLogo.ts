@@ -37,29 +37,16 @@ export default async function selectLogoActivity(input: { jobId: string; crawlRe
     throw new Error("Crawl report must include imageCandidates array");
   }
 
+  const client = createBlobClient(blobUrl);
   const scored = scoreLogoCandidates(input.crawlReport.imageCandidates).sort((a, b) => b.score - a.score);
   if (scored.length === 0) {
-    const fallback: LogoScore = {
-      url: input.crawlReport.startUrl,
-      score: 0.05,
-      reasons: ["fallback: no logo candidates"],
-    };
-    const client = createBlobClient(blobUrl);
-    const svg = buildPlaceholderSvg(input.crawlReport.startUrl);
-    const result = await writeBlob(
-      client,
-      containerName,
-      `jobs/${input.jobId}/logo.svg`,
-      svg,
-      "image/svg+xml",
-      input.jobId,
-      "logo_fallback"
-    );
-    return { ...fallback, blobPath: result.path, reasons: [...fallback.reasons, `Placeholder at ${result.path}`] };
+    return writePlaceholderLogo(client, containerName, input.jobId, input.crawlReport.startUrl, [
+      "fallback: no logo candidates",
+    ]);
   }
 
   const analyzed: LogoScore[] = [];
-  for (const candidate of scored.slice(0, 5)) {
+  for (const candidate of scored.slice(0, 8)) {
     try {
       const response = await safeFetchBuffer(candidate.url, { timeoutMs: 12000, maxBytes: 2 * 1024 * 1024 });
       const analysis = await analyzeImage(response.data);
@@ -69,21 +56,107 @@ export default async function selectLogoActivity(input: { jobId: string; crawlRe
     }
   }
 
-  const selection = (analyzed.length > 0 ? analyzed : scored).sort((a, b) => b.score - a.score)[0];
-  if (!selection) {
-    throw new Error("No logo candidates found after scoring and analysis.");
+  const prioritized = (analyzed.length > 0 ? analyzed : scored).sort((a, b) => b.score - a.score);
+  const failures: string[] = [];
+  for (const selection of prioritized) {
+    try {
+      const response = await safeFetchBuffer(selection.url, { timeoutMs: 15000, maxBytes: 4 * 1024 * 1024 });
+      const extension = resolveImageExtension(selection.url, response.contentType);
+      const result = await writeBlob(
+        client,
+        containerName,
+        `jobs/${input.jobId}/logo.${extension}`,
+        Buffer.from(response.data),
+        response.contentType || "image/png",
+        input.jobId,
+        "logo_upload"
+      );
+      return { ...selection, blobPath: result.path, reasons: [...selection.reasons, `Uploaded to ${result.path}`] };
+    } catch (error) {
+      failures.push(`${selection.url} (${String(error)})`);
+    }
   }
-  const extension = selection.url.split(".").pop() || "png";
-  const response = await safeFetchBuffer(selection.url, { timeoutMs: 15000, maxBytes: 4 * 1024 * 1024 });
-  const client = createBlobClient(blobUrl);
+
+  const failureSummary =
+    failures.length === 0
+      ? []
+      : [`fallback: all candidate downloads failed`, `failed candidates: ${failures.slice(0, 3).join(" | ")}`];
+  return writePlaceholderLogo(client, containerName, input.jobId, input.crawlReport.startUrl, failureSummary);
+}
+
+async function writePlaceholderLogo(
+  client: ReturnType<typeof createBlobClient>,
+  containerName: string,
+  jobId: string,
+  sourceUrl: string,
+  reasons: string[]
+): Promise<LogoScore> {
+  const svg = buildPlaceholderSvg(sourceUrl);
   const result = await writeBlob(
     client,
     containerName,
-    `jobs/${input.jobId}/logo.${extension}`,
-    Buffer.from(response.data),
-    response.contentType || "image/png",
-    input.jobId,
-    "logo_upload"
+    `jobs/${jobId}/logo.svg`,
+    svg,
+    "image/svg+xml",
+    jobId,
+    "logo_fallback"
   );
-  return { ...selection, blobPath: result.path, reasons: [...selection.reasons, `Uploaded to ${result.path}`] };
+  return {
+    url: result.url,
+    score: 0.05,
+    blobPath: result.path,
+    reasons: [...reasons, `Placeholder at ${result.path}`],
+  };
+}
+
+function resolveImageExtension(url: string, contentType?: string): string {
+  const extFromType = extensionFromContentType(contentType);
+  if (extFromType) {
+    return extFromType;
+  }
+
+  try {
+    const pathname = new URL(url).pathname;
+    const match = /\.([a-z0-9]{1,6})$/i.exec(pathname);
+    if (!match) {
+      return "png";
+    }
+    const extension = match[1].toLowerCase();
+    if (extension === "jpeg") {
+      return "jpg";
+    }
+    if (["png", "jpg", "svg", "gif", "webp", "bmp", "ico"].includes(extension)) {
+      return extension;
+    }
+  } catch {
+    // ignore and fallback
+  }
+
+  return "png";
+}
+
+function extensionFromContentType(contentType?: string): string | null {
+  if (!contentType) {
+    return null;
+  }
+  const normalized = contentType.split(";")[0].trim().toLowerCase();
+  switch (normalized) {
+    case "image/png":
+      return "png";
+    case "image/jpeg":
+      return "jpg";
+    case "image/svg+xml":
+      return "svg";
+    case "image/gif":
+      return "gif";
+    case "image/webp":
+      return "webp";
+    case "image/x-icon":
+    case "image/vnd.microsoft.icon":
+      return "ico";
+    case "image/bmp":
+      return "bmp";
+    default:
+      return null;
+  }
 }

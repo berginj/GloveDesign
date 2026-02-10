@@ -96,12 +96,14 @@ describe("selectLogo activity", () => {
   });
 
   it("tries another candidate when top-ranked logo upload fails", async () => {
+    const validPngBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
     vi.mocked(safeFetchBuffer).mockImplementation(async (url: string, options?: { maxBytes?: number }) => {
       if (options?.maxBytes === 2 * 1024 * 1024) {
         return {
           url,
-          data: Buffer.from("analysis"),
-          bytes: 8,
+          data: validPngBuffer,
+          bytes: validPngBuffer.length,
           contentType: "image/png",
         };
       }
@@ -110,8 +112,8 @@ describe("selectLogo activity", () => {
       }
       return {
         url,
-        data: Buffer.from("image"),
-        bytes: 5,
+        data: validPngBuffer,
+        bytes: validPngBuffer.length,
         contentType: "image/png",
       };
     });

@@ -5,6 +5,54 @@ import { applyLogoAnalysis, scoreLogoCandidates } from "../../logo/scoring";
 import { analyzeImage } from "../../logo/analyze";
 import { safeFetchBuffer } from "../../common/http";
 
+function validateImageBuffer(buffer: Buffer, contentType?: string): boolean {
+  if (buffer.length === 0) {
+    return false;
+  }
+
+  // Check magic bytes for common image formats
+  const magicBytes = buffer.slice(0, 12);
+
+  // PNG: 89 50 4E 47
+  if (magicBytes[0] === 0x89 && magicBytes[1] === 0x50 && magicBytes[2] === 0x4e && magicBytes[3] === 0x47) {
+    return true;
+  }
+
+  // JPEG: FF D8 FF
+  if (magicBytes[0] === 0xff && magicBytes[1] === 0xd8 && magicBytes[2] === 0xff) {
+    return true;
+  }
+
+  // GIF: 47 49 46 38
+  if (magicBytes[0] === 0x47 && magicBytes[1] === 0x49 && magicBytes[2] === 0x46 && magicBytes[3] === 0x38) {
+    return true;
+  }
+
+  // WebP: 52 49 46 46 ... 57 45 42 50
+  if (magicBytes[0] === 0x52 && magicBytes[1] === 0x49 && magicBytes[2] === 0x46 && magicBytes[3] === 0x46 &&
+      magicBytes[8] === 0x57 && magicBytes[9] === 0x45 && magicBytes[10] === 0x42 && magicBytes[11] === 0x50) {
+    return true;
+  }
+
+  // SVG: Check for '<svg' or '<?xml' at start (after possible BOM)
+  const asText = buffer.toString('utf8', 0, Math.min(100, buffer.length)).toLowerCase();
+  if (asText.includes('<svg') || (asText.includes('<?xml') && asText.includes('svg'))) {
+    return true;
+  }
+
+  // ICO: 00 00 01 00
+  if (magicBytes[0] === 0x00 && magicBytes[1] === 0x00 && magicBytes[2] === 0x01 && magicBytes[3] === 0x00) {
+    return true;
+  }
+
+  // BMP: 42 4D
+  if (magicBytes[0] === 0x42 && magicBytes[1] === 0x4d) {
+    return true;
+  }
+
+  return false;
+}
+
 function buildPlaceholderSvg(sourceUrl: string) {
   let label = "Team";
   try {
@@ -45,28 +93,42 @@ export default async function selectLogoActivity(input: { jobId: string; crawlRe
     ]);
   }
 
-  const analyzed: LogoScore[] = [];
-  for (const candidate of scored.slice(0, 8)) {
-    try {
-      const response = await safeFetchBuffer(candidate.url, { timeoutMs: 12000, maxBytes: 2 * 1024 * 1024 });
-      const analysis = await analyzeImage(response.data);
-      analyzed.push(applyLogoAnalysis(candidate, analysis));
-    } catch (error) {
-      analyzed.push(candidate);
-    }
-  }
+  const maxAnalysisCount = Number(process.env.LOGO_ANALYSIS_COUNT) || 8;
+  const analysisTimeoutMs = Number(process.env.LOGO_ANALYSIS_TIMEOUT_MS) || 12000;
+
+  // Parallelize image analysis for better performance
+  const analyzed: LogoScore[] = await Promise.all(
+    scored.slice(0, maxAnalysisCount).map(async (candidate) => {
+      try {
+        const response = await safeFetchBuffer(candidate.url, { timeoutMs: analysisTimeoutMs, maxBytes: 2 * 1024 * 1024 });
+        const analysis = await analyzeImage(response.data);
+        return applyLogoAnalysis(candidate, analysis);
+      } catch (error) {
+        return candidate;
+      }
+    })
+  );
 
   const prioritized = (analyzed.length > 0 ? analyzed : scored).sort((a, b) => b.score - a.score);
+  const downloadTimeoutMs = Number(process.env.LOGO_DOWNLOAD_TIMEOUT_MS) || 15000;
   const failures: string[] = [];
   for (const selection of prioritized) {
     try {
-      const response = await safeFetchBuffer(selection.url, { timeoutMs: 15000, maxBytes: 4 * 1024 * 1024 });
+      const response = await safeFetchBuffer(selection.url, { timeoutMs: downloadTimeoutMs, maxBytes: 4 * 1024 * 1024 });
+      const imageBuffer = Buffer.from(response.data);
+
+      // Validate the downloaded data is actually an image
+      if (!validateImageBuffer(imageBuffer, response.contentType)) {
+        failures.push(`${selection.url} (not a valid image format)`);
+        continue;
+      }
+
       const extension = resolveImageExtension(selection.url, response.contentType);
       const result = await writeBlob(
         client,
         containerName,
         `jobs/${input.jobId}/logo.${extension}`,
-        Buffer.from(response.data),
+        imageBuffer,
         response.contentType || "image/png",
         input.jobId,
         "logo_upload"

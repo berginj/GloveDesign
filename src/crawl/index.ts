@@ -6,11 +6,11 @@ import { FetchBudget, safeFetchText, sleep } from "../common/http";
 
 const MAX_IMAGES = readPositiveInt(process.env.BRANDING_CRAWL_MAX_IMAGES, 40);
 const MAX_PAGES = readPositiveInt(process.env.BRANDING_CRAWL_MAX_PAGES, 6);
-const MAX_BYTES = 25 * 1024 * 1024;
-const MAX_PAGE_BYTES = 2 * 1024 * 1024;
-const MAX_ASSET_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = readPositiveInt(process.env.BRANDING_CRAWL_MAX_BYTES, 25 * 1024 * 1024);
+const MAX_PAGE_BYTES = readPositiveInt(process.env.BRANDING_CRAWL_MAX_PAGE_BYTES, 2 * 1024 * 1024);
+const MAX_ASSET_BYTES = readPositiveInt(process.env.BRANDING_CRAWL_MAX_ASSET_BYTES, 5 * 1024 * 1024);
 const MAX_CSS_FILES = readPositiveInt(process.env.BRANDING_CRAWL_MAX_CSS_FILES, 6);
-const REQUEST_DELAY_MS = 150;
+const REQUEST_DELAY_MS = readPositiveInt(process.env.BRANDING_CRAWL_REQUEST_DELAY_MS, 150);
 
 export async function crawlSite(startUrl: string, jobId?: string): Promise<CrawlReport> {
   const visited: string[] = [];
@@ -352,11 +352,23 @@ async function collectCssBackgrounds(
         stage: "crawl-css",
         retries: 1,
       });
-      const matches = Array.from(response.data.matchAll(/url\(['"]?(.*?)['"]?\)/gi)).map((match) => match[1]);
+      // Remove CSS comments before parsing
+      const cleanedCss = response.data.replace(/\/\*[\s\S]*?\*\//g, "");
+
+      // Extract URLs from url() declarations
+      // Handles: url("..."), url('...'), url(...), with optional whitespace
+      const matches = Array.from(cleanedCss.matchAll(/url\(\s*(['"]?)([^'"()]+)\1\s*\)/gi)).map((match) => match[2].trim());
+
       for (const value of matches) {
         if (images.length >= MAX_IMAGES) {
           return;
         }
+
+        // Skip data URIs
+        if (value.startsWith("data:")) {
+          continue;
+        }
+
         const url = resolveUrl(cssUrl, value);
         if (!url || !isLikelyImage(url)) {
           continue;
@@ -460,10 +472,10 @@ async function checkRobots(startUrl: string, budget: FetchBudget, jobId?: string
     if (!ruleBlock) {
       return { checked: true, allowed: true, reason: "no explicit rules for user-agent *" };
     }
-    const disallowRules = Array.from(ruleBlock[1].matchAll(/Disallow:\s*(.*)/gi))
+    const disallowRules = Array.from(ruleBlock[1].matchAll(/^\s*Disallow:\s*(.*)/gim))
       .map((match) => match[1].trim())
       .filter(Boolean);
-    const allowRules = Array.from(ruleBlock[1].matchAll(/Allow:\s*(.*)/gi))
+    const allowRules = Array.from(ruleBlock[1].matchAll(/^\s*Allow:\s*(.*)/gim))
       .map((match) => match[1].trim())
       .filter(Boolean);
     if (disallowRules.includes("/") && !allowRules.includes("/")) {

@@ -153,7 +153,7 @@ describe('Color Extraction - Unit Tests', () => {
   });
 
   describe('Color Frequency Analysis', () => {
-    it('should count color occurrences correctly', () => {
+    it('should return unique colors (duplicates removed)', () => {
       const css = `
         body { background-color: #1a1a2e; }
         .header { background-color: #1a1a2e; }
@@ -163,13 +163,18 @@ describe('Color Extraction - Unit Tests', () => {
 
       const colors = extractColorsFromCss(css);
 
-      // Count occurrences
+      // extractColorsFromCss removes duplicates, so each color appears once
+      expect(colors).toContain('#1a1a2e');
+      expect(colors).toContain('#dc143c');
+
+      // Count occurrences - should be 1 for each since duplicates are removed
       const frequency: Record<string, number> = {};
       for (const color of colors) {
         frequency[color] = (frequency[color] || 0) + 1;
       }
 
-      expect(frequency['#1a1a2e']).toBeGreaterThan(frequency['#dc143c']);
+      expect(frequency['#1a1a2e']).toBe(1);
+      expect(frequency['#dc143c']).toBe(1);
     });
   });
 

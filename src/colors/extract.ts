@@ -277,6 +277,62 @@ function extractCssColorValues(content: string): Array<{ value: string; isVariab
   return results;
 }
 
+/**
+ * Simple utility to extract colors from CSS content
+ * Used for unit testing and simple extraction scenarios
+ */
+export function extractColorsFromCss(css: string): string[] {
+  if (!css || css.trim().length === 0) {
+    return [];
+  }
+
+  const results: string[] = [];
+  const matches = extractCssColorValues(css);
+
+  for (const match of matches) {
+    const normalized = normalizeColor(match.value);
+    if (normalized) {
+      results.push(normalized.toLowerCase());
+    }
+  }
+
+  // Remove duplicates
+  return Array.from(new Set(results));
+}
+
+/**
+ * Simple utility to extract colors from HTML content
+ * Extracts from inline styles and <style> tags
+ */
+export function extractColorsFromHtml(html: string): string[] {
+  if (!html || html.trim().length === 0) {
+    return [];
+  }
+
+  const results: string[] = [];
+
+  // Extract from inline styles
+  const inlineStyleMatches = html.matchAll(/style\s*=\s*["']([^"']+)["']/gi);
+  for (const match of inlineStyleMatches) {
+    const styleContent = match[1];
+    if (styleContent) {
+      results.push(...extractColorsFromCss(styleContent));
+    }
+  }
+
+  // Extract from <style> tags
+  const styleTagMatches = html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+  for (const match of styleTagMatches) {
+    const styleContent = match[1];
+    if (styleContent) {
+      results.push(...extractColorsFromCss(styleContent));
+    }
+  }
+
+  // Remove duplicates
+  return Array.from(new Set(results));
+}
+
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const sat = s / 100;
   const light = l / 100;

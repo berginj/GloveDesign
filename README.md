@@ -196,7 +196,7 @@ Look for:
 4) Job status is stored in Cosmos DB or Table Storage.
 
 ## Environment variables
-### Environment variables
+### Core infrastructure
 | Variable | Purpose |
 | --- | --- |
 | `SERVICEBUS_NAMESPACE` | Service Bus namespace (e.g. `<name>.servicebus.windows.net`) |
@@ -215,6 +215,24 @@ Look for:
 | `TABLE_CONNECTION_STRING` | Optional Table connection string (local dev) |
 | `TABLE_NAME` | Table name (default `jobs`) |
 | `WIZARD_ENDPOINT` | Optional HTTP endpoint for Playwright worker |
+
+### Crawl configuration (optional tuning)
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `BRANDING_CRAWL_MAX_PAGES` | Maximum pages to crawl per job | `6` |
+| `BRANDING_CRAWL_MAX_IMAGES` | Maximum image candidates to collect | `40` |
+| `BRANDING_CRAWL_MAX_CSS_FILES` | Maximum CSS files to parse for images | `6` |
+| `BRANDING_CRAWL_MAX_BYTES` | Total download budget per job (bytes) | `26214400` (25MB) |
+| `BRANDING_CRAWL_MAX_PAGE_BYTES` | Maximum bytes per HTML page | `2097152` (2MB) |
+| `BRANDING_CRAWL_MAX_ASSET_BYTES` | Maximum bytes per CSS/asset file | `5242880` (5MB) |
+| `BRANDING_CRAWL_REQUEST_DELAY_MS` | Delay between requests (rate limiting) | `150` |
+
+### Logo selection configuration (optional tuning)
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `LOGO_ANALYSIS_COUNT` | Number of top candidates to analyze | `8` |
+| `LOGO_ANALYSIS_TIMEOUT_MS` | Timeout for image analysis (ms) | `12000` |
+| `LOGO_DOWNLOAD_TIMEOUT_MS` | Timeout for logo download (ms) | `15000` |
 
 ### Deploy infrastructure
 ```bash

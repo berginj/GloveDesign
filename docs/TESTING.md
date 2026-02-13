@@ -172,7 +172,24 @@ Unit tests validate individual functions and modules in isolation.
 - Score by alt text
 - Combine scores correctly
 
-**3. URL Validation**
+**3. Crawl Edge Cases (`tests/crawl.edge-cases.test.ts`)**
+- Robots.txt blocking and missing scenarios
+- Budget enforcement (max bytes, max pages, max images)
+- Various image formats (WebP, AVIF, ICO, BMP)
+- CSS edge cases (data URIs, relative paths, comments)
+- Max pages/images limits
+- Malformed JSON-LD gracefully
+- Page prioritization (about/team pages)
+
+**4. Logo Selection Edge Cases (`tests/selectLogo.edge-cases.test.ts`)**
+- Invalid image data rejection (HTML instead of images)
+- Valid image format acceptance (PNG, JPEG, SVG, WebP magic bytes)
+- Empty buffer handling
+- Configurable analysis count
+- Placeholder SVG generation
+- First candidate success path
+
+**5. URL Validation**
 - Validate URL format
 - Block suspicious patterns
 - Block dangerous ports

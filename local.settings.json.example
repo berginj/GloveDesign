@@ -1,0 +1,35 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+
+    "SERVICEBUS_NAMESPACE": "your-namespace.servicebus.windows.net",
+    "SERVICEBUS_QUEUE": "glovejobs",
+    "SERVICEBUS_CONNECTION": "",
+
+    "COSMOS_ENDPOINT": "https://your-account.documents.azure.com:443/",
+    "COSMOS_DATABASE": "glovedesign",
+    "COSMOS_CONTAINER": "jobs",
+
+    "BLOB_CONNECTION_STRING": "UseDevelopmentStorage=true",
+    "BLOB_CONTAINER": "glovejobs",
+
+    "TABLE_CONNECTION_STRING": "UseDevelopmentStorage=true",
+    "TABLE_NAME": "jobs",
+
+    "WIZARD_ENDPOINT": "http://localhost:7072",
+
+    "BRANDING_CRAWL_MAX_PAGES": "6",
+    "BRANDING_CRAWL_MAX_IMAGES": "40",
+    "BRANDING_CRAWL_MAX_CSS_FILES": "6",
+    "BRANDING_CRAWL_MAX_BYTES": "26214400",
+    "BRANDING_CRAWL_MAX_PAGE_BYTES": "2097152",
+    "BRANDING_CRAWL_MAX_ASSET_BYTES": "5242880",
+    "BRANDING_CRAWL_REQUEST_DELAY_MS": "150",
+
+    "LOGO_ANALYSIS_COUNT": "8",
+    "LOGO_ANALYSIS_TIMEOUT_MS": "12000",
+    "LOGO_DOWNLOAD_TIMEOUT_MS": "15000"
+  }
+}

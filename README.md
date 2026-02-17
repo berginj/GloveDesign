@@ -28,9 +28,19 @@ POST /jobs (Functions API) ---> Service Bus queue ---> Durable Orchestrator
 
 ## Documentation
 
+### Getting Started
+- **[Quick Reference](./QUICK_REFERENCE.md)** - Common commands and quick troubleshooting
+- **[Contributing Guide](./CONTRIBUTING.md)** - Setup and development guidelines
+
+### Operations & Deployment
 - **[Production Deployment Guide](./docs/PRODUCTION.md)** - Complete guide for deploying to Azure, monitoring, alerts, and operational procedures
 - **[Troubleshooting Guide](./docs/TROUBLESHOOTING.md)** - Solutions for common issues (jobs stuck, dead letters, configuration errors)
+- **[Testing Guide](./docs/TESTING.md)** - Unit, integration, and coverage testing
+
+### Architecture & Features
 - **[Customizer Documentation](./docs/CUSTOMIZER.md)** - Interactive glove designer architecture and requirements
+- **[Security Guide](./docs/SECURITY.md)** - Security considerations and best practices
+- **[Changelog](./CHANGELOG.md)** - Version history and release notes
 
 ## Local development
 ### Prerequisites

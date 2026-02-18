@@ -1,5 +1,7 @@
 import { app, HttpRequest, HttpResponseInit } from "@azure/functions";
 import { loadCatalog } from "../../../customizer/catalog";
+import { Position } from "../../../customizer/types";
+import { ApiResponse } from "../../../common/apiHelpers";
 
 export async function getPatterns(request: HttpRequest): Promise<HttpResponseInit> {
   const catalog = loadCatalog();
@@ -17,7 +19,7 @@ export async function getPatterns(request: HttpRequest): Promise<HttpResponseIni
     results = results.filter((pattern) => pattern.sport === sport);
   }
   if (position) {
-    results = results.filter((pattern) => pattern.positions.includes(position as any));
+    results = results.filter((pattern) => pattern.positions.includes(position as Position));
   }
   if (seriesId) {
     results = results.filter((pattern) => pattern.seriesId === seriesId);
@@ -41,7 +43,7 @@ export async function getPatterns(request: HttpRequest): Promise<HttpResponseIni
     // Placeholder: left-hand throw support can be used for future filtering.
   }
 
-  return { status: 200, jsonBody: results };
+  return ApiResponse.ok(results);
 }
 
 app.http("getCatalogPatterns", {

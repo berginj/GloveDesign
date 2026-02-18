@@ -1,9 +1,10 @@
 import type { Task } from "durable-functions";
 import { CrawlReport, GloveDesign, JobOutputs, JobRequest, LogoScore, PaletteResult, WizardResult } from "../common/types";
 import { getActivityErrorMessage } from "../common/errorCategorization";
+import type { RetryOptions } from "./types";
 
 // Retry policy for network-dependent activities
-const networkRetryOptions = {
+const networkRetryOptions: RetryOptions = {
   firstRetryIntervalInMilliseconds: 2000,
   maxNumberOfAttempts: 3,
   backoffCoefficient: 2,
@@ -12,7 +13,7 @@ const networkRetryOptions = {
 };
 
 // Retry policy for storage operations
-const storageRetryOptions = {
+const storageRetryOptions: RetryOptions = {
   firstRetryIntervalInMilliseconds: 1000,
   maxNumberOfAttempts: 5,
   backoffCoefficient: 1.5,
@@ -156,7 +157,7 @@ const orchestrator = function* (context: any): Generator<Task, unknown, unknown>
 function* callActivityWithTimeout<T>(
   context: any,
   name: string,
-  retryOptions: any | null,
+  retryOptions: RetryOptions | null,
   input: unknown,
   timeoutMs: number
 ): Generator<Task, T, unknown> {

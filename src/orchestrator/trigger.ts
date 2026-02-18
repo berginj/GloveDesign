@@ -2,6 +2,7 @@ import { app, InvocationContext } from "@azure/functions";
 import * as df from "durable-functions";
 import { logError, logInfo } from "../common/logging";
 import { createJobStoreFromEnv } from "../common/jobStore";
+import type { ServiceBusJobMessage, NormalizedJobPayload } from "./types";
 
 const serviceBusQueueName = process.env.SERVICEBUS_QUEUE || "glovejobs";
 const serviceBusConnectionSetting = process.env.SERVICEBUS_CONNECTION ? "SERVICEBUS_CONNECTION" : "SERVICEBUS_NAMESPACE";
@@ -10,7 +11,7 @@ app.serviceBusQueue("jobQueueTrigger", {
   connection: serviceBusConnectionSetting,
   queueName: serviceBusQueueName,
   extraInputs: [df.input.durableClient()],
-  handler: async (message: any, context: InvocationContext) => {
+  handler: async (message: ServiceBusJobMessage, context: InvocationContext) => {
     const startTime = Date.now();
     let jobId = "unknown";
 
@@ -33,7 +34,7 @@ app.serviceBusQueue("jobQueueTrigger", {
       logInfo("trigger_received", { jobId, stage: "trigger" }, { teamUrl: payload.teamUrl, mode: payload.mode });
 
       // Validate Durable Functions client
-      let client: any;
+      let client: df.DurableClient;
       try {
         client = df.getClient(context);
         if (!client) {
@@ -108,7 +109,7 @@ app.serviceBusQueue("jobQueueTrigger", {
   },
 });
 
-function normalizePayload(raw: unknown, context: InvocationContext) {
+function normalizePayload(raw: unknown, context: InvocationContext): NormalizedJobPayload | null {
   if (!raw) {
     return null;
   }

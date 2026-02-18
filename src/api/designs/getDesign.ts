@@ -1,16 +1,20 @@
 import { app, HttpRequest, HttpResponseInit } from "@azure/functions";
 import { getDesign } from "../../customizer/store";
+import { ApiResponse, validateRequired } from "../../common/apiHelpers";
 
 export async function getDesignHandler(request: HttpRequest): Promise<HttpResponseInit> {
   const designId = request.params.designId;
-  if (!designId) {
-    return { status: 400, jsonBody: { error: "designId is required." } };
+  const validationError = validateRequired(designId, "designId");
+  if (validationError) {
+    return validationError;
   }
+
   const design = getDesign(designId);
   if (!design) {
-    return { status: 404, jsonBody: { error: "Design not found." } };
+    return ApiResponse.notFound("Design not found.");
   }
-  return { status: 200, jsonBody: design };
+
+  return ApiResponse.ok(design);
 }
 
 app.http("getDesign", {

@@ -1,23 +1,22 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import * as df from "durable-functions";
-import { createJobStoreFromEnv } from "../../common/jobStore";
+import { ApiResponse, getJobStore, validateRequired } from "../../common/apiHelpers";
 
 export async function cancelJob(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   const jobId = request.params.jobId ?? request.query.get("jobId");
-  if (!jobId) {
-    return { status: 400, jsonBody: { error: "jobId is required." } };
+  const validationError = validateRequired(jobId, "jobId");
+  if (validationError) {
+    return validationError;
   }
 
-  const store = createJobStoreFromEnv();
-  if (!store) {
-    context.log("Job store not configured.");
-    return { status: 500, jsonBody: { error: "Job store not configured." } };
+  const storeResult = await getJobStore(context);
+  if ("error" in storeResult) {
+    return storeResult.error;
   }
 
-  await store.init();
-  const job = await store.getJob(jobId);
+  const job = await storeResult.store.getJob(jobId);
   if (!job) {
-    return { status: 404, jsonBody: { error: "Job not found." } };
+    return ApiResponse.notFound("Job not found.");
   }
 
   let terminated = false;
@@ -29,12 +28,9 @@ export async function cancelJob(request: HttpRequest, context: InvocationContext
     context.log(`Failed to terminate orchestration ${jobId}: ${String(error)}`);
   }
 
-  await store.updateStage(jobId, "canceled", { error: "Job canceled by user." });
+  await storeResult.store.updateStage(jobId, "canceled", { error: "Job canceled by user." });
 
-  return {
-    status: 202,
-    jsonBody: { jobId, canceled: true, terminated },
-  };
+  return ApiResponse.accepted({ jobId, canceled: true, terminated });
 }
 
 app.http("cancelJob", {

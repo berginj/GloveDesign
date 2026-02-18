@@ -1,5 +1,6 @@
 import type { Task } from "durable-functions";
 import { CrawlReport, GloveDesign, JobOutputs, JobRequest, LogoScore, PaletteResult, WizardResult } from "../common/types";
+import { getActivityErrorMessage } from "../common/errorCategorization";
 
 // Retry policy for network-dependent activities
 const networkRetryOptions = {
@@ -172,43 +173,5 @@ function* callActivityWithTimeout<T>(
   return activityTask.result as T;
 }
 
-function getActivityErrorMessage(activity: string, error: unknown): string {
-  const errorStr = String(error);
-
-  const activityMessages: Record<string, string> = {
-    validateJob: "Failed to validate team URL",
-    crawlSite: "Failed to crawl team website",
-    selectLogo: "Failed to select or upload team logo",
-    extractColors: "Failed to extract color palette",
-    generateDesign: "Failed to generate glove design",
-    runWizard: "Failed to run autofill wizard",
-    writeOutputs: "Failed to save job outputs",
-    initialization: "Failed to initialize job orchestration",
-  };
-
-  const baseMessage = activityMessages[activity] ?? "Branding job failed";
-
-  // Check for specific error types to provide more helpful messages
-  if (errorStr.includes("storage not configured") || errorStr.includes("BLOB")) {
-    return `${baseMessage}: Blob storage not configured. Please contact support.`;
-  }
-  if (errorStr.includes("Service Bus") || errorStr.includes("SERVICEBUS")) {
-    return `${baseMessage}: Message queue not configured. Please contact support.`;
-  }
-  if (errorStr.includes("Job store") || errorStr.includes("COSMOS") || errorStr.includes("TABLE")) {
-    return `${baseMessage}: Database not configured. Please contact support.`;
-  }
-  if (errorStr.includes("robots.txt") || errorStr.includes("Disallow")) {
-    return `${baseMessage}: Website blocks automated crawling.`;
-  }
-  if (errorStr.includes("timeout") || errorStr.includes("ETIMEDOUT")) {
-    return `${baseMessage}: Website took too long to respond.`;
-  }
-  if (errorStr.includes("ENOTFOUND") || errorStr.includes("DNS")) {
-    return `${baseMessage}: Website not found or unreachable.`;
-  }
-
-  return `${baseMessage}. ${errorStr}`;
-}
 
 export default orchestrator;

@@ -15,3 +15,9 @@ azurite/
 .vscode/
 .vs/
 .idea/
+
+# Claude Code
+.claude/
+
+# Backup files
+*.backup

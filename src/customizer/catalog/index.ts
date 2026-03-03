@@ -15,6 +15,8 @@ import embroideryFonts from "./embroidery-fonts.json";
 import embroideryPlacements from "./embroidery-placements.json";
 import { Catalog } from "../types";
 
+export type { Catalog } from "../types";
+
 let cached: Catalog | null = null;
 
 export function loadCatalog(): Catalog {

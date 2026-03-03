@@ -57,7 +57,7 @@ app.serviceBusQueue("jobQueueTrigger", {
       context.log(`[jobQueueTrigger] Starting orchestration for job ${jobId}...`);
       let instanceId: string;
       try {
-        instanceId = await client.startNew("jobOrchestrator", jobId, payload);
+        instanceId = await client.startNew("jobOrchestrator", { instanceId: jobId, input: payload });
       } catch (startError) {
         const errorMsg = `Failed to start orchestration: ${String(startError)}`;
         context.error(`[jobQueueTrigger] ${errorMsg}`);
@@ -115,28 +115,28 @@ function normalizePayload(raw: unknown, context: InvocationContext): NormalizedJ
   }
   if (typeof raw === "string") {
     try {
-      return JSON.parse(raw);
+      return JSON.parse(raw) as NormalizedJobPayload;
     } catch (error) {
       context.error(`jobQueueTrigger could not parse string payload: ${String(error)}`);
-      return raw;
+      return null;
     }
   }
   if (Buffer.isBuffer(raw)) {
     try {
-      return JSON.parse(raw.toString("utf8"));
+      return JSON.parse(raw.toString("utf8")) as NormalizedJobPayload;
     } catch (error) {
       context.error(`jobQueueTrigger could not parse buffer payload: ${String(error)}`);
-      return raw.toString("utf8");
+      return null;
     }
   }
   if (ArrayBuffer.isView(raw)) {
     try {
       const text = Buffer.from(raw.buffer).toString("utf8");
-      return JSON.parse(text);
+      return JSON.parse(text) as NormalizedJobPayload;
     } catch (error) {
       context.error(`jobQueueTrigger could not parse binary payload: ${String(error)}`);
-      return raw;
+      return null;
     }
   }
-  return raw;
+  return raw as NormalizedJobPayload;
 }
